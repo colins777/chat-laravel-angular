@@ -1,0 +1,12 @@
+# Laravel
+/backend/vendor
+/backend/storage/*.key
+/backend/.env
+
+# Node.js (Angular)
+/frontend/node_modules
+/frontend/dist
+
+# ОС
+.DS_Store
+Thumbs.db
