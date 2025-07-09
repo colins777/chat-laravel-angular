@@ -1,0 +1,28 @@
+<div class="flex items-center justify-center min-h-screen bg-gray-800">
+  <div class="bg-black p-8 rounded shadow-lg w-full max-w-md text-light">
+    <!-- <h1 class="text-2xl font-bold mb-6 text-primary text-center">Add valid data</h1> -->
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()"  class="space-y-4">
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Email</mat-label>
+        <input matInput placeholder="Email" formControlName="email" type="email" />
+        <mat-error *ngIf="loginForm.get('email')?.hasError('required')">Email</mat-error>
+        <mat-error *ngIf="loginForm.get('email')?.hasError('email')">Wrong email</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" class="w-full">
+        <mat-label>Password</mat-label>
+        <input matInput placeholder="Password" formControlName="password" type="password" />
+        <mat-error *ngIf="loginForm.get('password')?.hasError('required')">Password</mat-error>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" class="w-full bg-primary text-light"
+        >
+        Login
+      </button>
+      <!-- <div *ngIf="loading" class="text-center mt-2 text-primary">Loading...</div> -->
+
+      <div *ngIf="error" class="text-red-500 text-center mt-2">{{ error }}</div>
+    </form>
+  </div>
+</div>
