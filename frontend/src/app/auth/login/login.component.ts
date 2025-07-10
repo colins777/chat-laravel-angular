@@ -4,7 +4,8 @@ import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { HttpTokenService } from '../../http-token.service';
+import {MatIcon} from '@angular/material/icon';
+import { HttpTokenService } from '../../services/http-token.service';
 import { Router } from '@angular/router';
 
 

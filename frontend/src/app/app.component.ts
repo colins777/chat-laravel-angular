@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { HttpTokenService } from './http-token.service';
+import { HttpTokenService } from './services/http-token.service';
+import { EchoService } from './services/echo.service';
 
 @Component({
   selector: 'app-root',
@@ -12,7 +13,10 @@ export class AppComponent implements OnInit{
 
   title = 'frontend';
 
-  constructor(private tSvc:HttpTokenService) {}
+  constructor(
+    private tSvc:HttpTokenService,
+    private echoService: EchoService
+  ) {}
 
   ngOnInit(): void {
     this.tSvc.getCrsfToken()
