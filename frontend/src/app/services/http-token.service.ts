@@ -1,6 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { API_ENDPOINTS } from '../constants/api-endpoints';
 
+//@TODO add this import to use the API endpoints
 const baseUrl = 'http://localhost:8000';
 
 @Injectable({
@@ -11,7 +14,7 @@ export class HttpTokenService {
   constructor(private http: HttpClient) { }
 
   getCrsfToken() {
-    return this.http.get<any>(`${baseUrl}/sanctum/csrf-cookie`, 
+    return this.http.get<any>(API_ENDPOINTS.GET_CRSF_TOKEN, 
       {withCredentials: true, observe: 'response'}
     );
   }
@@ -28,4 +31,9 @@ export class HttpTokenService {
   getUser() {
     return this.http.get<any>(`${baseUrl}/api/user`, {withCredentials: true})
   }
+
+  getConversations(): Observable<any> {
+    return this.http.get<any>(API_ENDPOINTS.CONVERSATIONS.GET_ALL_CONVERSATIONS, {withCredentials: true});
+  }
+
 }

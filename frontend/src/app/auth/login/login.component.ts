@@ -39,7 +39,7 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log('Form', this.loginForm.value)
+    //console.log('Form', this.loginForm.value)
 
     let {email, password} = this.loginForm.value;
     this.svc.login(email, password)

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -45,6 +44,27 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+        ];
+    }
+
+    public function toConversationArray()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'is_group' => false,
+            'is_user' => true,
+            'is_admin' => (bool) $this->is_admin,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'blocked_at' => $this->blocked_at,
+            'last_message' => $this->last_message,
+            'last_message_date' => $this->last_message_date,
+            'read_at' => $this->read_at,
+            'is_read' => $this->is_read,
+            'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
+            'email' => $this->email,
+
         ];
     }
 }

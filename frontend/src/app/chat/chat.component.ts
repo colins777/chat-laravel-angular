@@ -6,10 +6,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import {  } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpTokenService } from '../services/http-token.service';
-import Echo from 'laravel-echo';
+import { Conversations } from '../interfaces/Conversations';
 
 @Component({
   selector: 'app-chat',
@@ -30,29 +29,22 @@ import Echo from 'laravel-echo';
 export class ChatComponent implements OnInit, OnDestroy {
   errMessage!: string | null;
   user!: any | null;
-
- // @Input() conversations: any[] = [];
- // @Input() selectedConversation: any;
   onlineUsers: { [key: number]: any } = {};
   localConversations: any[] = [];
   sortedConversations: any[] = [];
-  private echoChannel: any;
-  private echo: any;
 
-  // If you need a chats property, declare it like this:
-  chats: any[] = [];
-  selectChat: any = null;
+  selectChat: Conversations | null = null;
   image: string | null = null;
   showSearch: boolean = false;
   searchTerm: string = '';
+  isLoading: boolean = false;
+  filter = 'unread';
+  conversations: Conversations[] = [];
 
   constructor(
     private svc: HttpTokenService,
     private router: Router
   ) {}
-  ngOnDestroy(): void {
-    throw new Error('Method not implemented.');
-  }
 
   ngOnInit(): void {
     this.svc.getUser()
@@ -61,6 +53,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.user = response;
 
           console.log('response', response);
+          this.loadConversations();
 
         },
         error: (error: { error: { message: string } }) => {
@@ -69,61 +62,37 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.router.navigate(['/chat']);
         }
       });
+  }
 
+  ngOnDestroy(): void {}
 
-  //  this.localConversations = [...this.conversations];
-  //  // this.sortConversations();
-  //   // Echo listeners
-  //   this.echo = new Echo({
-  //     broadcaster: 'pusher',
-  //     key: 'your-pusher-key',
-  //     cluster: 'your-pusher-cluster',
-  //     forceTLS: true
-  //     // Add other options as needed
-  //   });
-
-  //   this.echoChannel = this.echo.join('online')
-  //     .here((users: any[]) => {
-  //       const onlineUserObj = Object.fromEntries(
-  //         users.map(user => [user.id, user])
-  //       );
-  //       this.onlineUsers = { ...this.onlineUsers, ...onlineUserObj };
-  //     })
-  //     .joining((user: any) => {
-  //       this.onlineUsers = { ...this.onlineUsers, [user.id]: user };
-  //     })
-  //     .leaving((user: any) => {
-  //       const { [user.id]: _, ...rest } = this.onlineUsers;
-  //       this.onlineUsers = rest;
-  //     })
-  //     .error((error: any) => {
-  //       console.error('Echo error:', error);
-  //     });
-
-    }
-
-    filter = 'unread';
-  // Example initialization (if needed, otherwise remove or set in ngOnInit)
-  conversations = [
-    {
-      id: 1,
-      name: 'Alice',
-      avatar: 'https://i.pravatar.cc/100?img=1',
-      lastMessage: 'Hi there!',
-    },
-    {
-      id: 2,
-      name: 'Bob',
-      avatar: 'https://i.pravatar.cc/100?img=2',
-      lastMessage: 'How are you?',
-      image: 'https://i.pravatar.cc/100?img=1',
-    },
-  ];
-
+  loadConversations(): void {
+  this.isLoading = true;
+  
+  this.svc.getConversations()
+    .subscribe({
+      next: (response: any) => {
+        this.conversations = response.data || response; // Adjust based on your API response structure
+        
+        // Set first conversation as selected if available
+        if (this.conversations.length > 0) {
+          this.selectedConversation = this.conversations[0];
+        }
+        
+        this.isLoading = false;
+        console.log('Conversations loaded:', this.conversations);
+      },
+      error: (error: any) => {
+        this.errMessage = 'Failed to load conversations';
+        this.isLoading = false;
+        console.error('Error fetching conversations:', error);
+      }
+    });
+  }
 
   selectedConversation = this.conversations[0];
   messages = [
-    { text: 'The first witness was the first minute or two, they began running about in the distance, and she drew herself up closer to Alice\'s side as she could, for the moment she quite forgot how to speak.', isMine: false, image: 'https://i.pravatar.cc/100?img=1', },
+    { text: 'Hello!', isMine: false, image: 'https://i.pravatar.cc/100?img=1', },
     { text: 'Hi! How are you?', isMine: true, image: 'https://i.pravatar.cc/100?img=1', },
   ];
   newMessage = '';
@@ -150,5 +119,5 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
-  }
+}
 
