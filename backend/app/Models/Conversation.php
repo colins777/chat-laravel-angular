@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Conversation extends Model
 {
@@ -31,44 +32,44 @@ class Conversation extends Model
     }
 
     public static function getUserConversations(User $user)
-    {
-        $userId = $user->id;
-        $query = User::select(['users.*', 'messages.message as last_message',
-            'messages.created_at as last_message_date'])
-            ->where('users.id', '!=', $userId)
-            ->leftJoin('conversations', function ($join) use ($userId) {
-                $join->on('conversations.user_id_1', '=', 'users.id')
-                ->where('conversations.user_id_2', '=', $userId)
-                    ->orWhere(function ($query) use ($userId) {
-                        $query->on('conversations.user_id_2', '=', 'users.id')
-                            ->where('conversations.user_id_1', '=', $userId);
-                    });
-            })
-            ->leftJoin('messages', 'messages.id', '=', 'conversations.last_message_id')
-            ->orderBy('messages.created_at', 'desc')
-            ->orderBy('users.name');
+{
+    $userId = $user->id;
+    $query = User::select([
+        'users.*', 
+        'messages.message as last_message',
+        'messages.created_at as last_message_date',
+        'conversations.user_id_1',
+        'conversations.user_id_2'
+    ])
+        ->where('users.id', '!=', $userId)
+        ->leftJoin('conversations', function ($join) use ($userId) {
+            $join->on('conversations.user_id_1', '=', 'users.id')
+            ->where('conversations.user_id_2', '=', $userId)
+                ->orWhere(function ($query) use ($userId) {
+                    $query->on('conversations.user_id_2', '=', 'users.id')
+                        ->where('conversations.user_id_1', '=', $userId);
+                });
+        })
+        ->leftJoin('messages', 'messages.id', '=', 'conversations.last_message_id')
+        ->orderBy('messages.created_at', 'desc')
+        ->orderBy('users.name')->get();
 
-        return $query->get();
-    }
+    Log::info('getUserConversations', [
+        'request_method' => $query,
+    ]);
+    
+    return $query;
+}
 
-        public static function getConversationForSidebar(User $user)
-    {
-        $users = User::getUsersExceptUser($user);
-
-        return $users->map(function (User $user) {
-            //return array of conversations users
-            return $user->toConversationArray();
-        });
-    }
 
     public static function updateConversationWithMessage($userId1, $userId2, $message)
     {
         $conversation = Conversation::where(function ($query) use ($userId1, $userId2) {
-            $query->where('user_id1', $userId1)
-                ->where('user_id2', $userId2);
+            $query->where('user_id_1', $userId1)
+                ->where('user_id_2', $userId2);
         })->orWhere(function ($query) use ($userId1, $userId2) {
             $query->where('user_id1', $userId2)
-                ->where('user_id2', $userId1);
+                ->where('user_id_2', $userId1);
         });
 
         if ($conversation) {
@@ -77,8 +78,8 @@ class Conversation extends Model
             ]);
         } else {
             Conversation::create([
-                'user_id1' => $userId1,
-                'user_id2' => $userId2,
+                'user_id_1' => $userId1,
+                'user_id_2' => $userId2,
                 'last_message_id' => $message->id,
             ]);
         }

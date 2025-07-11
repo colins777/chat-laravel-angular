@@ -51,10 +51,9 @@ class User extends Authenticatable
     {
         return [
             'id' => $this->id,
+            'user_id_1' => $this->user_id_1,
+            'user_id_2' => $this->user_id_2,
             'name' => $this->name,
-            'is_group' => false,
-            'is_user' => true,
-            'is_admin' => (bool) $this->is_admin,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'blocked_at' => $this->blocked_at,
@@ -64,7 +63,6 @@ class User extends Authenticatable
             'is_read' => $this->is_read,
             'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
             'email' => $this->email,
-
         ];
     }
 }

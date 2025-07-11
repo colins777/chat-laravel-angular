@@ -9,7 +9,7 @@ use App\Models\User;
 
 class ConversationController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         $user = Auth::user();
 
