@@ -13,4 +13,7 @@ export const API_ENDPOINTS = {
   CONVERSATIONS: {
     GET_ALL_CONVERSATIONS: `${BASE_URL}/api/conversations`,
   },
+  MESSAGES: {
+    GET_MESSAGES_BY_USER: `${BASE_URL}/api/messages`,
+  }
 } as const;

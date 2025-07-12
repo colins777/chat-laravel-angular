@@ -1,9 +1,8 @@
 export interface Conversations {
   id: number;
+  user_id_1: number;
+  user_id_2: number;
   name: string;
-  is_group: boolean;
-  is_user: boolean;
-  is_admin: boolean;
   created_at: Date;
   updated_at: Date;
   blocked_at: Date | null;

@@ -21,5 +21,9 @@ export const routes: Routes = [
         component: ChatComponent,
         canActivate: [AuthGuard]
     },
+    { 
+        path: 'chat/user/:userId', 
+        component: ChatComponent 
+    },
 
 ];

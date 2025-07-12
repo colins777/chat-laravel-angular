@@ -36,4 +36,8 @@ export class HttpTokenService {
     return this.http.get<any>(API_ENDPOINTS.CONVERSATIONS.GET_ALL_CONVERSATIONS, {withCredentials: true});
   }
 
+  getMessagesByUser(userId: number): Observable<any> {
+    return this.http.get<any>(`${API_ENDPOINTS.MESSAGES.GET_MESSAGES_BY_USER}/${userId}`, {withCredentials: true});
+  }
+
 }

@@ -1,6 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router'; // Add this import
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
@@ -8,7 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { HttpTokenService } from '../services/http-token.service';
-import { Conversations } from '../interfaces/Conversations';
+import { Conversations } from '../interfaces/Conversation';
+import { Message } from '../interfaces/Message';
 
 @Component({
   selector: 'app-chat',
@@ -21,6 +23,7 @@ import { Conversations } from '../interfaces/Conversations';
     MatIconModule,
     MatButtonModule,
     FormsModule, 
+    RouterModule, 
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
@@ -29,21 +32,24 @@ import { Conversations } from '../interfaces/Conversations';
 export class ChatComponent implements OnInit, OnDestroy {
   errMessage!: string | null;
   user!: any | null;
-  onlineUsers: { [key: number]: any } = {};
   localConversations: any[] = [];
   sortedConversations: any[] = [];
 
-  selectChat: Conversations | null = null;
+  messages: Message [] = [];
+  conversations: Conversations[] = [];
   image: string | null = null;
   showSearch: boolean = false;
   searchTerm: string = '';
   isLoading: boolean = false;
   filter = 'unread';
-  conversations: Conversations[] = [];
+
+  selectedConversation = this.conversations[0] ?? null;
+  newMessage = '';
 
   constructor(
     private svc: HttpTokenService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -54,7 +60,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
           console.log('response', response);
           this.loadConversations();
-
+          this.loadMessagesByUser(this.user.id);
         },
         error: (error: { error: { message: string } }) => {
           this.errMessage = error.error.message || 'An error occurred';
@@ -72,7 +78,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   this.svc.getConversations()
     .subscribe({
       next: (response: any) => {
-        this.conversations = response.data || response; // Adjust based on your API response structure
+        this.conversations = response.data || response;
         
         // Set first conversation as selected if available
         if (this.conversations.length > 0) {
@@ -90,34 +96,37 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
   }
 
-  selectedConversation = this.conversations[0];
-  messages = [
-    { text: 'Hello!', isMine: false, image: 'https://i.pravatar.cc/100?img=1', },
-    { text: 'Hi! How are you?', isMine: true, image: 'https://i.pravatar.cc/100?img=1', },
-  ];
-  newMessage = '';
+  onConversationClick(conversation: Conversations): void {
 
-  selectConversation(convo: any) {
-    this.selectedConversation = convo;
+    let partnerId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
+    
+    this.loadMessagesByUser(partnerId)
+    this.selectedConversation =  conversation
+
+    this.router.navigate(['/chat/user', partnerId]);
   }
 
-  sendMessage() {
-    if (this.newMessage.trim()) {
-      this.messages.push({ text: this.newMessage, isMine: true, image: 'https://i.pravatar.cc/100?img=1' });
-      this.newMessage = '';
-    }
+
+  
+
+  loadMessagesByUser(userId: number): void {
+    //this.isLoading = true; 
+
+    this.svc.getMessagesByUser(userId)
+    .subscribe({
+      next: (response: any) => {
+        this.messages = response.data || response;
+
+        console.log('Messages loaded:', this.messages);
+      },
+      error: (error: any) => {
+        this.errMessage = 'Failed to load conversations';
+        this.isLoading = false;
+        console.error('Error fetching conversations:', error);
+      }
+    });
   }
 
-  attachImage(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-       // this.messages.push({ image: reader.result, isMine: true });
-      };
-      reader.readAsDataURL(file);
-    }
-  }
 
+  sendMessage() {}
 }
-

@@ -9,35 +9,34 @@ declare global {
   }
 }
 
-@Injectable({
-  providedIn: 'root'
-})
-export class EchoService {
-  echo: Echo<any>;
+// @Injectable({
+//   providedIn: 'root'
+// })
+// export class EchoService {
+//   echo: Echo<any>;
 
-  constructor() {
-    window.Pusher = Pusher;
+//   constructor() {
+//     window.Pusher = Pusher;
 
-    this.echo = new Echo({
-      broadcaster: 'pusher',
-      //@TODO need tofix
-      key: 'your-pusher-key',         // 🔁 заміни на свій ключ
-      cluster: 'your-cluster',        // 🔁 напр. 'eu'
-      forceTLS: true,
-      encrypted: true,
-      authEndpoint: '/broadcasting/auth', // Якщо потрібна автентифікація
-      auth: {
-        headers: {
-          Authorization: `Bearer ${this.getToken()}`
-        }
-      }
-    });
+//     this.echo = new Echo({
+//       broadcaster: 'pusher',
+//       //@TODO need tofix
+//       key: 'your-pusher-key',  
+//       cluster: 'your-cluster',       
+//       forceTLS: true,
+//       encrypted: true,
+//       authEndpoint: '/broadcasting/auth',
+//       auth: {
+//         headers: {
+//           Authorization: `Bearer ${this.getToken()}`
+//         }
+//       }
+//     });
 
-    window.Echo = this.echo;
-  }
+//     window.Echo = this.echo;
+//   }
 
-  private getToken(): string {
-    // 🔁 Заміни цю логіку на свою систему автентифікації
-    return localStorage.getItem('token') || '';
-  }
-}
+//   private getToken(): string {
+//     return localStorage.getItem('token') || '';
+//   }
+// }
