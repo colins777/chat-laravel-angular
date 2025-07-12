@@ -19,16 +19,21 @@ class MessageController extends Controller
 { 
     public function getMessagesByUser(int $userId)
     {
-        $messages = Message::where([
-            ['sender_id', '=', auth()->id()],
-            ['receiver_id', '=', $userId]
-        ])->orWhere([
-            ['sender_id', '=', $userId],
-            ['receiver_id', '=', auth()->id()]
-        ])->orderBy('created_at', 'asc')->paginate(10);
 
-        return $messages->toArray();
+    $currentUser = auth()->id();
+    //Log::info('Fetching messages between user ' . $currentUser . ' and user ' . $userId);
+
+    $messages = Message::where(function($query) use ($currentUser, $userId) {
+            $query->whereIn('sender_id', [$currentUser, $userId])
+                  ->whereIn('receiver_id', [$currentUser, $userId]);
+        })
+        ->whereColumn('sender_id', '!=', 'receiver_id')
+        ->orderBy('created_at', 'desc')
+        ->paginate(10);
+    //return $messages->toArray();
+        return MessageResource::collection($messages);
     }
+
 
     public function loadOlder(Message $message)
     {
