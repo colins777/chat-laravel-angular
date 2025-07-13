@@ -1,3 +1,5 @@
+import { User } from "./User";
+
 export interface Message {
   id: number;
   conversation_id: number | null;
@@ -9,4 +11,5 @@ export interface Message {
   created_at: string;
   updated_at: string;
   image?: string;
+  sender?: User;
 }

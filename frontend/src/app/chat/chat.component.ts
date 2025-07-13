@@ -11,6 +11,8 @@ import { FormsModule } from '@angular/forms';
 import { HttpTokenService } from '../services/http-token.service';
 import { Conversations } from '../interfaces/Conversation';
 import { Message } from '../interfaces/Message';
+import { MessageFormComponent } from '../components/message-form/message-form.component';
+
 
 @Component({
   selector: 'app-chat',
@@ -23,7 +25,8 @@ import { Message } from '../interfaces/Message';
     MatIconModule,
     MatButtonModule,
     FormsModule, 
-    RouterModule, 
+    RouterModule,
+    MessageFormComponent
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
@@ -45,6 +48,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   selectedConversation = this.conversations[0] ?? null;
   newMessage = '';
+  //@TODO fix default value
+  partnerId: number = 0;
 
   constructor(
     private svc: HttpTokenService,
@@ -58,9 +63,17 @@ export class ChatComponent implements OnInit, OnDestroy {
         next: (response: any) => {
           this.user = response;
 
-          console.log('response', response);
+          console.log('User info response: ', response);
           this.loadConversations();
           this.loadMessagesByUser(this.user.id);
+
+          this.route.paramMap.subscribe(params => {
+          const userId = Number(params.get('userId'));
+          if (userId) {
+            this.loadMessagesByUser(userId);
+        }
+      });
+        
         },
         error: (error: { error: { message: string } }) => {
           this.errMessage = error.error.message || 'An error occurred';
@@ -98,20 +111,13 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   onConversationClick(conversation: Conversations): void {
 
-    let partnerId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
-    
-    this.loadMessagesByUser(partnerId)
+    this.partnerId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
+   // this.loadMessagesByUser(partnerId)
     this.selectedConversation =  conversation
-
-    this.router.navigate(['/chat/user', partnerId]);
+    this.router.navigate(['/chat/user', this.partnerId]);
   }
 
-
-  
-
-  loadMessagesByUser(userId: number): void {
-    //this.isLoading = true; 
-
+    loadMessagesByUser(userId: number): void {
     this.svc.getMessagesByUser(userId)
     .subscribe({
       next: (response: any) => {
@@ -127,6 +133,18 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
   }
 
+  handleSendMessage(event: { message: string, image: File | null, partnerId: number }) {
+    // Prepare FormData as before, send via service
+    const formData = new FormData();
+    formData.append('message', event.message);
+    if (event.image) {
+      formData.append('image', event.image);
+    }
+    this.sendMessage(this.partnerId)
+  }
 
-  sendMessage() {}
+
+  sendMessage(partnerId: number) {
+    console.log('sending message partnerId', partnerId);
+  }
 }
