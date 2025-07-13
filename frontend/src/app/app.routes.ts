@@ -25,5 +25,9 @@ export const routes: Routes = [
         path: 'chat/user/:userId', 
         component: ChatComponent 
     },
+    { 
+        path: 'chat/message-store/:receiverId', 
+        component: ChatComponent 
+    }
 
 ];

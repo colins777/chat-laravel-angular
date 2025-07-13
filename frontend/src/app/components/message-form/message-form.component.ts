@@ -14,8 +14,8 @@ export class MessageFormComponent {
   newMessage: string = '';
   selectedImage: File | null = null;
 
-  @Input() partnerId!: number;
-  @Output() messageSend = new EventEmitter<{ message: string, image: File | null,partnerId: number }>();
+  @Input() receiverId!: number;
+  @Output() messageSend = new EventEmitter<{ message: string, attachments: File | null,receiverId: number }>();
 
   onImageSelected(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -30,8 +30,8 @@ export class MessageFormComponent {
     if (!this.newMessage.trim() && !this.selectedImage) return;
     this.messageSend.emit({ 
       message: this.newMessage, 
-      image: this.selectedImage,
-      partnerId: this.partnerId
+      attachments: this.selectedImage,
+      receiverId: this.receiverId
      });
     this.newMessage = '';
     this.selectedImage = null;

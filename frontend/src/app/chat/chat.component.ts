@@ -49,7 +49,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   selectedConversation = this.conversations[0] ?? null;
   newMessage = '';
   //@TODO fix default value
-  partnerId: number = 0;
+  receiverId: number = 0;
 
   constructor(
     private svc: HttpTokenService,
@@ -65,7 +65,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
           console.log('User info response: ', response);
           this.loadConversations();
-          this.loadMessagesByUser(this.user.id);
+        //  this.loadMessagesByUser(this.user.id);
 
           this.route.paramMap.subscribe(params => {
           const userId = Number(params.get('userId'));
@@ -92,13 +92,14 @@ export class ChatComponent implements OnInit, OnDestroy {
     .subscribe({
       next: (response: any) => {
         this.conversations = response.data || response;
-        
+
         // Set first conversation as selected if available
-        if (this.conversations.length > 0) {
+        if (this.conversations.length > 0 && this.selectedConversation == null) {
           this.selectedConversation = this.conversations[0];
+
+          this.receiverId = this.user.id == this.selectedConversation.user_id_1  ? this.selectedConversation.user_id_2 : this.conversations[0].user_id_1
         }
-        
-        this.isLoading = false;
+
         console.log('Conversations loaded:', this.conversations);
       },
       error: (error: any) => {
@@ -111,18 +112,17 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   onConversationClick(conversation: Conversations): void {
 
-    this.partnerId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
-   // this.loadMessagesByUser(partnerId)
+    this.receiverId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
+   // this.loadMessagesByUser(this.receiverId)
     this.selectedConversation =  conversation
-    this.router.navigate(['/chat/user', this.partnerId]);
+    this.router.navigate(['/chat/user', this.receiverId]);
   }
 
     loadMessagesByUser(userId: number): void {
     this.svc.getMessagesByUser(userId)
     .subscribe({
       next: (response: any) => {
-        this.messages = response.data || response;
-
+        this.messages = response.data.reverse() || response;
         console.log('Messages loaded:', this.messages);
       },
       error: (error: any) => {
@@ -133,18 +133,34 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
   }
 
-  handleSendMessage(event: { message: string, image: File | null, partnerId: number }) {
-    // Prepare FormData as before, send via service
-    const formData = new FormData();
-    formData.append('message', event.message);
-    if (event.image) {
-      formData.append('image', event.image);
-    }
-    this.sendMessage(this.partnerId)
+  handleSendMessage(event: { message: string, attachments: File | null, receiverId: number }) {
+      const formData = new FormData();
+      formData.append('message', event.message);
+      formData.append('receiver_id', event.receiverId.toString());
+      if (event.attachments) {
+        formData.append('attachments[]', event.attachments);
+      }
+
+      this.storeMessage(event.receiverId, formData);
+      this.loadMessagesByUser(this.receiverId);
   }
 
 
-  sendMessage(partnerId: number) {
-    console.log('sending message partnerId', partnerId);
+  storeMessage(receiverId: number, formData: FormData): void {
+
+
+    this.svc.storeMessage(receiverId, formData)
+
+    .subscribe({
+      next: (response: any) => {
+
+
+        console.log('Conversations loaded:', this.conversations);
+      },
+      error: (error: any) => {
+        
+        console.error('Error fetching conversations:', error);
+      }
+    });
   }
 }

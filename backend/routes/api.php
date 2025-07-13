@@ -12,3 +12,5 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 Route::middleware('auth:sanctum')->get('/conversations', [ConversationController::class, 'index']);
 
 Route::middleware('auth:sanctum')->get('/messages/{user}', [MessageController::class, 'getMessagesByUser']);
+
+Route::middleware('auth:sanctum')->post('/message-store', [MessageController::class, 'store']);

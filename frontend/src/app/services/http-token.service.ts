@@ -40,4 +40,10 @@ export class HttpTokenService {
     return this.http.get<any>(`${API_ENDPOINTS.MESSAGES.GET_MESSAGES_BY_USER}/${userId}`, {withCredentials: true});
   }
 
+  storeMessage(receiverId: number, FormData: FormData): Observable<any> {
+    return this.http.post<any>(`${API_ENDPOINTS.MESSAGES.STORE_MESSAGE}`, 
+      FormData,
+      {withCredentials: true});
+  }
+
 }

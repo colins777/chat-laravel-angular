@@ -6,7 +6,6 @@ use App\Events\SocketMessage;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
-use App\Models\Group;
 use App\Models\Message;
 use App\Models\MessageAttachment;
 use App\Models\User;
@@ -22,40 +21,35 @@ class MessageController extends Controller
 
     $currentUser = auth()->id();
     //Log::info('Fetching messages between user ' . $currentUser . ' and user ' . $userId);
-
     $messages = Message::where(function($query) use ($currentUser, $userId) {
             $query->whereIn('sender_id', [$currentUser, $userId])
                   ->whereIn('receiver_id', [$currentUser, $userId]);
         })
         ->whereColumn('sender_id', '!=', 'receiver_id')
-        ->orderBy('created_at', 'desc')
+        ->latest()
+       // ->orderBy('created_at', 'asc')
         ->paginate(10);
-    //return $messages->toArray();
+        //return $messages->toArray();
         return MessageResource::collection($messages);
+        //$reversed = array_reverse($original, true);
+
     }
 
 
     public function loadOlder(Message $message)
     {
-        if ($message->group_id) {
-            $messages = Message::where('created_at', '<', $message->created_at)
-                ->where('group_id', $message->group_id)
-                ->latest()
-                ->paginate(10)
+
+        $messages = Message::where('created_at', '<', $message->created_at)
+            ->where(function ($query) use ($message) {
+                $query->where('sender_id', $message->sender_id)
+                    ->where('receiver_id', $message->receiver_id)
+                    ->orWhere('sender_id', $message->receiver_id)
+                    ->where('receiver_id', $message->sender_id)
                 ;
-        } else {
-            $messages = Message::where('created_at', '<', $message->created_at)
-                ->where(function ($query) use ($message) {
-                    $query->where('sender_id', $message->sender_id)
-                        ->where('receiver_id', $message->receiver_id)
-                        ->orWhere('sender_id', $message->receiver_id)
-                        ->where('receiver_id', $message->sender_id)
-                    ;
-                })
-                ->latest()
-                ->paginate(10)
-            ;
-        }
+            })
+            ->latest()
+            ->paginate(10);
+        
 
      //   return MessageResource::collection($messages);
     }
@@ -65,7 +59,6 @@ class MessageController extends Controller
         $data = $request->validated();
         $data['sender_id'] = auth()->id();
         $receiverId =  $data['receiver_id'] ?? null;
-        $groupId = $data['group_id'] ?? null;
 
         $files = $data['attachments'] ?? [];
 
@@ -91,10 +84,7 @@ class MessageController extends Controller
             $message->attachments = $attachments;
         }
 
-        //if message for user - user (not group)
-        if ($receiverId) {
-            Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
-        }
+        Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
 
        // SocketMessage::dispatch($message);
 

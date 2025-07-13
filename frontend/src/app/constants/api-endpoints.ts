@@ -15,5 +15,6 @@ export const API_ENDPOINTS = {
   },
   MESSAGES: {
     GET_MESSAGES_BY_USER: `${BASE_URL}/api/messages`,
+    STORE_MESSAGE: `${BASE_URL}/api/message-store`
   }
 } as const;
