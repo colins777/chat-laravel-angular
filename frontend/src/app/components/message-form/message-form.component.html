@@ -3,21 +3,36 @@
   (ngSubmit)="sendMessage()"
   enctype="multipart/form-data"
 >
+
+<div class="flex justify-start items-center w-full bg-black relative">
+  <label for="fileInput" class="file-input-label ml-2 cursor-pointer absolute" title="Datei anhängen">
+    <svg xmlns="http://www.w3.org/2000/svg" class="clip-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="24" height="24">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.414 6.414a6 6 0 008.486 8.486L21 13" />
+    </svg>
+  </label>
+  <input
+    type="file"
+    id="fileInput"
+    (change)="onImageSelected($event)"
+    accept="image/*"
+    class="hidden"
+  />
   <textarea
     [(ngModel)]="newMessage"
     name="message"
     rows="2"
-    placeholder="Type your message..."
-    class="flex-1 px-4 py-2 rounded bg-[#f5f5f5] text-black focus:outline-none resize-none"
+    placeholder="Eine Nachricht schreiben..."
+    class="flex-1 px-4 py-2 pl-[40px] rounded bg-[#2a2a2a] text-white focus:outline-none resize-none"
     required
   ></textarea>
-  <input
-    type="file"
-    (change)="onImageSelected($event)"
-    accept="image/*"
-    class="ml-2"
-  />
+</div>
+
   <button type="submit" class="ml-2 px-4 py-2 rounded bg-[#b30000] text-white">
     Send
   </button>
 </form>
+
+<!-- Error message (hidden by default) -->
+<div class="error-message" *ngIf="errorMessage">
+  {{ errorMessage }}
+</div>

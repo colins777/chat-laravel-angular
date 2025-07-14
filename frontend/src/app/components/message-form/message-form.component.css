@@ -1,0 +1,45 @@
+.file-input-wrapper {
+  position: relative;
+  width: 180px;
+}
+
+.file-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #b30000;
+  pointer-events: none;
+}
+
+.file-input {
+  width: 100%;
+  padding-left: 36px;
+  padding-right: 8px;
+  height: 36px;
+  border-radius: 8px;
+  
+  border: none;
+  color: #222;
+  font-size: 1rem;
+  outline: none;
+}
+
+.file-input::-webkit-file-upload-button {
+  visibility: hidden;
+}
+
+.file-input::before {
+  content: '';
+}
+
+.error-message {
+  color: #ff4d4d;
+  font-size: 0.875rem;
+  margin-top: 4px;
+  min-height: 1.25rem;
+  visibility: hidden;
+}
+.error-message.ng-star-inserted {
+  visibility: visible;
+}

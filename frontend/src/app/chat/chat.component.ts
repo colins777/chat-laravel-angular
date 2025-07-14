@@ -57,9 +57,10 @@ export class ChatComponent implements OnInit, OnDestroy {
   receiverId: number = 0;
   groupedMessages: { [label: string]: Message[] } = {};
 
-  //
   loading: boolean = false;
   error: string = '';
+  sendMessageError: string = '';
+
     constructor(
       private svc: HttpTokenService,
       private router: Router,
@@ -190,12 +191,10 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.svc.storeMessage(receiverId, formData)
     .subscribe({
       next: (response: any) => {
-
-
         console.log('Conversations loaded:', this.conversations);
       },
-      error: (error: any) => {
-        
+      error: (error) => {
+        this.sendMessageError = error.error.message;
         console.error('Error fetching conversations:', error);
       }
     });
