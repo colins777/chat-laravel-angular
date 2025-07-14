@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\SocketMessage;
+use App\Events\PublicMessageSent;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
@@ -84,12 +85,12 @@ class MessageController extends Controller
             $message->attachments = $attachments;
         }
 
+        //send message was created event to the frontend
+        SocketMessage::dispatch($message);
+
         Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
-
-       // SocketMessage::dispatch($message);
-
-       // return new MessageResource($message);
-
+    
+        return new MessageResource($message);
     }
 
     public function destroy(Message $message)

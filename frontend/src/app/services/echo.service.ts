@@ -1,6 +1,8 @@
-import { Injectable } from '@angular/core';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import { SETTINGS_WS } from '../constants/settings-ws';
+
+window.Pusher = Pusher;
 
 declare global {
   interface Window {
@@ -9,34 +11,13 @@ declare global {
   }
 }
 
-// @Injectable({
-//   providedIn: 'root'
-// })
-// export class EchoService {
-//   echo: Echo<any>;
-
-//   constructor() {
-//     window.Pusher = Pusher;
-
-//     this.echo = new Echo({
-//       broadcaster: 'pusher',
-//       //@TODO need tofix
-//       key: 'your-pusher-key',  
-//       cluster: 'your-cluster',       
-//       forceTLS: true,
-//       encrypted: true,
-//       authEndpoint: '/broadcasting/auth',
-//       auth: {
-//         headers: {
-//           Authorization: `Bearer ${this.getToken()}`
-//         }
-//       }
-//     });
-
-//     window.Echo = this.echo;
-//   }
-
-//   private getToken(): string {
-//     return localStorage.getItem('token') || '';
-//   }
-// }
+export const echo = new Echo({
+  broadcaster: 'reverb',
+  key: SETTINGS_WS.REVERB_APP_KEY,
+  wsHost: SETTINGS_WS.REVERB_HOST,
+  wsPort: SETTINGS_WS.WS_PORT,
+  authEndpoint: 'http://localhost:8000/broadcasting/auth',
+  forceTLS: false,
+  disableStats: true,
+  enabledTransports: ['ws', 'wss'],
+});

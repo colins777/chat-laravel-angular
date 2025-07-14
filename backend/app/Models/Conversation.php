@@ -54,9 +54,9 @@ class Conversation extends Model
         ->orderBy('messages.created_at', 'desc')
         ->orderBy('users.name')->get();
 
-    Log::info('getUserConversations', [
-        'request_method' => $query,
-    ]);
+    // Log::info('getUserConversations', [
+    //     'request_method' => $query,
+    // ]);
     
     return $query;
 }

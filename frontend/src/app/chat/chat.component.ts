@@ -1,7 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router'; // Add this import
+import { RouterModule } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
@@ -26,7 +26,7 @@ import { MessageFormComponent } from '../components/message-form/message-form.co
     MatButtonModule,
     FormsModule, 
     RouterModule,
-    MessageFormComponent
+    MessageFormComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
@@ -46,22 +46,28 @@ export class ChatComponent implements OnInit, OnDestroy {
   isLoading: boolean = false;
   filter = 'unread';
 
-  selectedConversation = this.conversations[0] ?? null;
+  selectedConversation:any = this.conversations[0] ?? null;
   newMessage = '';
   //@TODO fix default value
   receiverId: number = 0;
 
-  constructor(
-    private svc: HttpTokenService,
-    private router: Router,
-    private route: ActivatedRoute
-  ) {}
+    constructor(
+      private svc: HttpTokenService,
+      private router: Router,
+      private route: ActivatedRoute
+    ) {}
+
+
+  //addEcho service for listening to events
+  listenToEchoEvents(): void {}
 
   ngOnInit(): void {
     this.svc.getUser()
       .subscribe({
         next: (response: any) => {
           this.user = response;
+
+          this.listenToEchoEvents();
 
           console.log('User info response: ', response);
           this.loadConversations();
@@ -142,6 +148,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       }
 
       this.storeMessage(event.receiverId, formData);
+      this.loadConversations();
       this.loadMessagesByUser(this.receiverId);
   }
 
