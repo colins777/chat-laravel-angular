@@ -26,9 +26,8 @@ export class LeftSidebarComponent {
   @Output() showSearchChange = new EventEmitter<boolean>();
   @Output() filterChange = new EventEmitter<string>();
 
-
   loading: boolean = false;
-  error: string | null = '';
+  error: string = '';
 
   onConversationClick(conversation: Conversations) {
     this.conversationClick.emit(conversation);

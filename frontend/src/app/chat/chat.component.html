@@ -18,11 +18,11 @@
   <!-- Chat Content -->
   <main class="flex-1 flex flex-col">
     <!-- Chat Header -->
-    <div *ngIf="selectedConversation && messages" class="p-4 flex justify-between items-center border-b border-gray-700 bg-[#1e1e1e]">
+    <div class="p-4 flex justify-between items-center border-b border-gray-700 bg-[#1e1e1e]">
 
         <!-- conversation-component -->
         <div class="flex items-center space-x-3">
-            <div class="relative inline-block">
+            <div *ngIf="selectedConversation"  class="relative inline-block">
                 <img [src]="selectedConversation?.avatar" alt="Avatar" class="w-12 h-12 rounded-full object-cover  shadow-xl"   />
                 
                 <!-- Online indicator -->
@@ -30,13 +30,13 @@
             </div>
             
             <div>
-                <p class="font-medium">{{ selectedConversation?.name || 'Select a conversation' }}</p>
-                <p class="text-sm text-gray-400 truncate">Zuletz aktiv vor2 min</p>
+                <p class="font-medium">{{ selectedConversation?.name || 'Wählen Sie eine Konversation aus.' }}</p>
+                <p *ngIf="selectedConversation" class="text-sm text-gray-400 truncate">Zuletz aktiv vor2 min</p>
             </div>
         </div>
         <!--End conversation-component -->
 
-      <div class="flex space-x-2">
+      <div *ngIf="selectedConversation" class="flex space-x-2">
         <button class="p-2 rounded bg-[#b30000]">
           📞
         </button>
@@ -49,12 +49,14 @@
 
     <!-- Messages block-->
 <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#121212]">
-       <app-loader-wrapper [loading]="loading" [error]="error"></app-loader-wrapper>
-  <p *ngIf="!selectedConversation && !messages" class="text-center text-gray-500">
-    Choose the conversation!
-  </p>
 
-  <ng-container *ngIf="selectedConversation">
+  <app-loader-wrapper [loading]="loading" [error]="error"></app-loader-wrapper>
+
+  <h1 *ngIf="!selectedConversation && !showMessages" class="text-center text-gray-500 text-3xl">
+    Wählen Sie eine Konversation aus.
+  </h1>
+
+  <ng-container *ngIf="showMessages">
     <div *ngFor="let item of messages">
       <!-- Sender (current user) -->
       <div

@@ -15,7 +15,6 @@ import { MessageFormComponent } from '../components/message-form/message-form.co
 import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
 import { LoaderWrapperComponent } from '../components/UI/loader-wrapper/loader-wrapper.component';
 
-
 @Component({
   selector: 'app-chat',
   standalone: true,
@@ -47,17 +46,16 @@ export class ChatComponent implements OnInit, OnDestroy {
   image: string | null = null;
   showSearch: boolean = false;
   searchTerm: string = '';
-  isLoading: boolean = false;
   filter = 'unread';
 
-  selectedConversation:any = this.conversations[0] ?? null;
+  selectedConversation:Conversations | null = null;
+  showMessages: boolean = false;
   newMessage = '';
-  //@TODO fix default value
   receiverId: number = 0;
 
-  loading: boolean = true;
+  //
+  loading: boolean = false;
   error: string = '';
-
     constructor(
       private svc: HttpTokenService,
       private router: Router,
@@ -78,7 +76,6 @@ export class ChatComponent implements OnInit, OnDestroy {
 
           console.log('User info response: ', response);
           this.loadConversations();
-        //  this.loadMessagesByUser(this.user.id);
 
           this.route.paramMap.subscribe(params => {
           const userId = Number(params.get('userId'));
@@ -99,27 +96,22 @@ export class ChatComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {}
 
   loadConversations(): void {
-  this.isLoading = true;
+  this.loading = true;
   
   this.svc.getConversations()
     .subscribe({
       next: (response: any) => {
         this.conversations = response.data || response;
 
-        // Set first conversation as selected if available
-        if (this.conversations.length > 0 && this.selectedConversation == null) {
-          this.selectedConversation = this.conversations[0];
-
+        if (this.selectedConversation) {
           this.receiverId = this.user.id == this.selectedConversation.user_id_1  ? this.selectedConversation.user_id_2 : this.conversations[0].user_id_1
         }
-
         this.loading = false;
-
-        console.log('Conversations loaded:', this.conversations);
+        console.log('selectedConversation:', this.selectedConversation);
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';
-        this.isLoading = false;
+        this.loading = false;
         console.error('Error fetching conversations:', error);
       }
     });
@@ -128,23 +120,30 @@ export class ChatComponent implements OnInit, OnDestroy {
   onConversationClick(conversation: Conversations): void {
 
     this.receiverId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
-   // this.loadMessagesByUser(this.receiverId)
     this.selectedConversation =  conversation
+    console.log('selectedConversation', this.selectedConversation);
     this.router.navigate(['/chat/user', this.receiverId]);
   }
 
-    loadMessagesByUser(userId: number): void {
-    this.svc.getMessagesByUser(userId)
-    .subscribe({
-      next: (response: any) => {
-        this.messages = response.data.reverse() || response;
-        console.log('Messages loaded:', this.messages);
-      },
-      error: (error: any) => {
-        this.errMessage = 'Failed to load conversations';
-        this.isLoading = false;
-        console.error('Error fetching conversations:', error);
-      }
+  loadMessagesByUser(userId: number): void {
+      this.loading = true;
+      this.svc.getMessagesByUser(userId)
+
+      .subscribe({
+        next: (response: any) => {
+          
+          this.showMessages = true;
+          this.messages = response.data.reverse() || response;
+
+          console.log('Messages loaded res:', response);
+          console.log('Messages loaded:', this.messages);
+          this.loading = false;
+        },
+        error: (error: any) => {
+          this.loading = false;
+          this.errMessage = 'Failed to load conversations';
+          console.error('Error fetching conversations:', error);
+        }
     });
   }
 
@@ -163,10 +162,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
 
   storeMessage(receiverId: number, formData: FormData): void {
-
-
     this.svc.storeMessage(receiverId, formData)
-
     .subscribe({
       next: (response: any) => {
 
