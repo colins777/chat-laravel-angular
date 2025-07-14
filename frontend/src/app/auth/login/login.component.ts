@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import {MatIcon} from '@angular/material/icon';
 import { HttpTokenService } from '../../services/http-token.service';
 import { Router } from '@angular/router';
+import { ButtonLoaderComponent } from '../../components/UI/button-loader.component';
 
 
 @Component({
@@ -17,7 +18,8 @@ import { Router } from '@angular/router';
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatButtonModule
+    MatButtonModule,
+    ButtonLoaderComponent
   ],
   templateUrl: './login.component.html'
 })
@@ -31,6 +33,8 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder, 
   ) {}
 
+  isLoading: boolean = false;
+
   ngOnInit() {
     this.loginForm = this.fb.group({
       email: [''],
@@ -39,15 +43,18 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() {
-    //console.log('Form', this.loginForm.value)
+    this.isLoading = true;
 
     let {email, password} = this.loginForm.value;
     this.svc.login(email, password)
     .subscribe({
-      next: res => this.router.navigate(['/chat']),
-      error: err => {
+      next: res => {
+         this.router.navigate(['/chat'])
+         this.isLoading = false;
+      },
+        error: err => {
         this.error = err.error.message || 'An error occurred during login';
-        console.error('Login error:', err);
+        this.isLoading = false;
       }
     })
   }
