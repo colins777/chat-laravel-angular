@@ -1,0 +1,10 @@
+<div class="w-full h-full flex items-center justify-center" *ngIf="loading">
+  <div class="vertical-loader" aria-label="Loading"></div>
+</div>
+
+<div class="w-full h-full flex flex-col items-center justify-center text-center text-red-500 p-4" *ngIf="!loading && error">
+  <div class="mb-2">{{ error }}</div>
+  <div>Please reload the page, something went wrong.</div>
+</div>
+
+<ng-content *ngIf="!loading && !error"></ng-content>
