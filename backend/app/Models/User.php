@@ -61,7 +61,8 @@ class User extends Authenticatable
             'last_message_date' => $this->last_message_date,
             'read_at' => $this->read_at,
             'is_read' => $this->is_read,
-            'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
+            //'avatar' => $this->avatar ? asset('storage/' . $this->avatar) : null,
+            'avatar' => $this->avatar,
             'email' => $this->email,
         ];
     }

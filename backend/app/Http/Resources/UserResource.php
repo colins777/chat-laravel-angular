@@ -16,7 +16,7 @@ class UserResource extends JsonResource
         //return only specific user properties to hide sensitive information
         return [
             'id' => $this->id,
-            'avatar_url' => $this->avatar ? Storage::url($this->avatar) : null,
+            'avatar_url' => $this->avatar,
             'name' => $this->name,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,

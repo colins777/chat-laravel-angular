@@ -130,6 +130,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         
         this.loading = false;
         console.log('selectedConversation:', this.selectedConversation);
+        console.log('conversations:', this.conversations);
+        
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';

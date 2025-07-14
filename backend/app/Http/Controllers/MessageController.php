@@ -86,7 +86,7 @@ class MessageController extends Controller
         }
 
         //send message was created event to the frontend
-        SocketMessage::dispatch($message);
+        //SocketMessage::dispatch($message);
 
         Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
     
