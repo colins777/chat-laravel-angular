@@ -12,6 +12,7 @@ import { HttpTokenService } from '../services/http-token.service';
 import { Conversations } from '../interfaces/Conversation';
 import { Message } from '../interfaces/Message';
 import { MessageFormComponent } from '../components/message-form/message-form.component';
+import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
 
 
 @Component({
@@ -27,6 +28,7 @@ import { MessageFormComponent } from '../components/message-form/message-form.co
     FormsModule, 
     RouterModule,
     MessageFormComponent,
+    LeftSidebarComponent
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
