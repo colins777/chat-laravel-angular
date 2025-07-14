@@ -49,6 +49,7 @@
 
     <!-- Messages block-->
 <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#121212]">
+       <app-loader-wrapper [loading]="loading" [error]="error"></app-loader-wrapper>
   <p *ngIf="!selectedConversation && !messages" class="text-center text-gray-500">
     Choose the conversation!
   </p>

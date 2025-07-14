@@ -13,6 +13,7 @@ import { Conversations } from '../interfaces/Conversation';
 import { Message } from '../interfaces/Message';
 import { MessageFormComponent } from '../components/message-form/message-form.component';
 import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
+import { LoaderWrapperComponent } from '../components/UI/loader-wrapper/loader-wrapper.component';
 
 
 @Component({
@@ -28,7 +29,8 @@ import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
     FormsModule, 
     RouterModule,
     MessageFormComponent,
-    LeftSidebarComponent
+    LeftSidebarComponent,
+    LoaderWrapperComponent
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
@@ -52,6 +54,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   newMessage = '';
   //@TODO fix default value
   receiverId: number = 0;
+
+  loading: boolean = true;
+  error: string = '';
 
     constructor(
       private svc: HttpTokenService,
@@ -107,6 +112,8 @@ export class ChatComponent implements OnInit, OnDestroy {
 
           this.receiverId = this.user.id == this.selectedConversation.user_id_1  ? this.selectedConversation.user_id_2 : this.conversations[0].user_id_1
         }
+
+        this.loading = false;
 
         console.log('Conversations loaded:', this.conversations);
       },

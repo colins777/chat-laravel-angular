@@ -2,22 +2,17 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Conversations } from '../../interfaces/Conversation';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LoaderWrapperComponent } from '../../components/UI/loader-wrapper/loader-wrapper.component';
 
 @Component({
   selector: 'app-left-sidebar',
   standalone: true,
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    LoaderWrapperComponent
   ],
-  templateUrl: './left-sidebar.component.html',
-  // styles: [`
-  //   :host {
-  //     display: block;
-  //     width: 100%;
-  //   }
-  // `]
-  //styleUrls: ['./left-sidebar.component.css']
+  templateUrl: './left-sidebar.component.html'
 })
 export class LeftSidebarComponent {
   @Input() conversations: Conversations[] = [];
@@ -30,6 +25,10 @@ export class LeftSidebarComponent {
   @Output() searchTermChange = new EventEmitter<string>();
   @Output() showSearchChange = new EventEmitter<boolean>();
   @Output() filterChange = new EventEmitter<string>();
+
+
+  loading: boolean = false;
+  error: string | null = '';
 
   onConversationClick(conversation: Conversations) {
     this.conversationClick.emit(conversation);
