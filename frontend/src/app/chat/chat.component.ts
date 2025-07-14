@@ -14,6 +14,9 @@ import { Message } from '../interfaces/Message';
 import { MessageFormComponent } from '../components/message-form/message-form.component';
 import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
 import { LoaderWrapperComponent } from '../components/UI/loader-wrapper/loader-wrapper.component';
+import { getDateLabel } from '../helpers/message-date-label.helper';
+
+
 
 @Component({
   selector: 'app-chat',
@@ -52,6 +55,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   showMessages: boolean = false;
   newMessage = '';
   receiverId: number = 0;
+  groupedMessages: { [label: string]: Message[] } = {};
 
   //
   loading: boolean = false;
@@ -91,9 +95,26 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.router.navigate(['/chat']);
         }
       });
+
+      this.route.paramMap.subscribe(params => {
+          const receiverId = Number(params.get('userId'));
+          if (receiverId) {
+          this.receiverId = receiverId;
+          //this.loadMessagesByUser(receiverId);
+        }
+        });
   }
 
   ngOnDestroy(): void {}
+
+  groupMessagesByDate(messages: Message[]): { [label: string]: Message[] } {
+    return messages.reduce((groups, msg) => {
+      const label = getDateLabel(msg.created_at);
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(msg);
+      return groups;
+    }, {} as { [label: string]: Message[] });
+  }
 
   loadConversations(): void {
   this.loading = true;
@@ -106,6 +127,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (this.selectedConversation) {
           this.receiverId = this.user.id == this.selectedConversation.user_id_1  ? this.selectedConversation.user_id_2 : this.conversations[0].user_id_1
         }
+        
         this.loading = false;
         console.log('selectedConversation:', this.selectedConversation);
       },
@@ -134,6 +156,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           
           this.showMessages = true;
           this.messages = response.data.reverse() || response;
+          this.groupedMessages = this.groupMessagesByDate(this.messages);
 
           console.log('Messages loaded res:', response);
           console.log('Messages loaded:', this.messages);

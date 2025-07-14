@@ -57,57 +57,62 @@
   </h1>
 
   <ng-container *ngIf="showMessages">
-    <div *ngFor="let item of messages">
-      <!-- Sender (current user) -->
-      <div
-        *ngIf="item.sender_id === user.id; else receiverBlock"
-        class="flex justify-end items-end"
-      >
-        <div class="flex flex-row-reverse items-end space-x-2 space-x-reverse">
-          <img
-            *ngIf="user?.avatar_url"
-            [src]="user?.avatar_url"
-            class="w-8 h-8 rounded-full ml-2"
-            alt="Your avatar"
-          />
-          <div class="bg-[#b30000] text-white p-3 rounded-lg max-w-xs md:max-w-md shadow-lg">
-            <p>{{ item.message }}</p>
-            <img
-              *ngIf="item.image"
-              [src]="item.image"
-              class="mt-2 rounded max-h-48"
-              alt="Attached"
-            />
-            <span class="block text-xs text-right text-gray-300 mt-1">{{ item.created_at | date:'shortTime' }}</span>
-          </div>
+    <div *ngFor="let group of groupedMessages | keyvalue">
+       <div class="text-center text-gray-400 my-2 text-sm">
+          {{ group.key }}
         </div>
-      </div>
-
-      <!-- Receiver -->
-      <ng-template #receiverBlock>
-        <div class="flex justify-start items-end">
-          <div class="flex items-end space-x-2">
+        <div *ngFor="let item of group.value">
+        <!-- Sender (current user) -->
+        <div
+          *ngIf="item.sender_id === user.id; else receiverBlock"
+          class="flex justify-end items-end"
+        >
+          <div class="flex flex-row-reverse items-end space-x-2 space-x-reverse my-3">
             <img
-              *ngIf="item.sender?.avatar_url"
-              [src]="item.sender?.avatar_url"
-              class="w-8 h-8 rounded-full mr-2"
-              alt="Sender avatar"
+              *ngIf="user?.avatar_url"
+              [src]="user?.avatar_url"
+              class="w-8 h-8 rounded-full ml-2"
+              alt="Your avatar"
             />
-            <div class="bg-[#23272f] text-white p-3 rounded-lg max-w-xs md:max-w-md shadow">
-              <p>{{ item.message }}</p>
+            <div class="bg-[#b30000] text-white p-3 rounded-lg max-w-xs md:max-w-md shadow-lg">
+              <p class="text-sm">{{ item.message }}</p>
               <img
                 *ngIf="item.image"
                 [src]="item.image"
                 class="mt-2 rounded max-h-48"
                 alt="Attached"
               />
-              <span class="block text-xs text-right text-gray-400 mt-1">{{ item.created_at | date:'shortTime' }}</span>
+              <span class="block text-xs text-right text-gray-300 mt-1">{{ item.created_at | date:'shortTime' }}</span>
             </div>
           </div>
         </div>
-      </ng-template>
-    </div>
-  </ng-container>
+
+        <!-- Receiver -->
+        <ng-template #receiverBlock>
+          <div class="flex justify-start items-end">
+            <div class="flex items-end space-x-2">
+              <img
+                *ngIf="item.sender?.avatar_url"
+                [src]="item.sender?.avatar_url"
+                class="w-8 h-8 rounded-full mr-2"
+                alt="Sender avatar"
+              />
+              <div class="bg-[#23272f] text-white p-3 rounded-lg max-w-xs md:max-w-md shadow">
+                <p class="text-sm">{{ item.message }}</p>
+                <img
+                  *ngIf="item.image"
+                  [src]="item.image"
+                  class="mt-2 rounded max-h-48"
+                  alt="Attached"
+                />
+                <span class="block text-xs text-right text-gray-400 mt-1">{{ item?.created_at | date:'HH:mm' }}</span>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+      </div>
+    </ng-container>
     </div>
     <!--End Messages block -->
    
