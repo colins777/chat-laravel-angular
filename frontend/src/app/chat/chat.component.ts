@@ -16,8 +16,6 @@ import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
 import { LoaderWrapperComponent } from '../components/UI/loader-wrapper/loader-wrapper.component';
 import { getDateLabel } from '../helpers/message-date-label.helper';
 
-
-
 @Component({
   selector: 'app-chat',
   standalone: true,
@@ -46,7 +44,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   conversations: Conversation[] = [];
   selectedConversation: Conversation | null = null;
 
-  messages: Message [] = [];
+  messages: Message[] = [];
   image: string | null = null;
   showSearch: boolean = false;
   searchTerm: string = '';
@@ -59,6 +57,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   error: string = '';
   sendMessageError: string = '';
   messageIsSending: boolean = false;
+
+  currentPage: number = 1;
+  hasMoreMessages: boolean = true;
 
     constructor(
       private svc: HttpTokenService,
@@ -81,7 +82,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.route.paramMap.subscribe(params => {
           const userId = Number(params.get('userId'));
           if (userId) {
-            this.loadMessagesByUser(userId);
+            this.loadMessagesByUser(userId, this.currentPage);
         }
       });
         
@@ -94,26 +95,30 @@ export class ChatComponent implements OnInit, OnDestroy {
       });
 
       this.route.paramMap.subscribe(params => {
-          const receiverId = Number(params.get('userId'));
-          if (receiverId) {
-          this.receiverId = receiverId;
-          //@TODO need to fix 
-          //this.loadMessagesByUser(receiverId);
-        }
+        const receiverId = Number(params.get('userId'));
+        if (receiverId) {
+        this.receiverId = receiverId;
+      }
         });
   }
 
   ngOnDestroy(): void {}
 
   groupMessagesByDate(messages: Message[]): { [label: string]: Message[] } {
-    return messages.reduce((groups, msg) => {
+    const groups: { [label: string]: Message[] } = {};
+    const seenIds = new Set<number>();
+
+    for (const msg of messages) {
+      if (seenIds.has(msg.id)) continue;
+      seenIds.add(msg.id);
+
       const label = getDateLabel(msg.created_at);
       if (!groups[label]) groups[label] = [];
       groups[label].push(msg);
-      return groups;
-    }, {} as { [label: string]: Message[] });
-  }
+    }
 
+    return groups;
+  }
   loadConversations(): void {
   this.loading = true;
   
@@ -126,11 +131,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (this.selectedConversation) {
           this.receiverId = this.user.id == this.selectedConversation.user_id_1  ? this.selectedConversation.user_id_2 : this.conversations[0].user_id_1
         }
-        
         this.loading = false;
-        console.log('selectedConversation:', this.selectedConversation);
-        console.log('conversations:', this.conversations);
-        
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';
@@ -141,36 +142,44 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   onConversationClick(conversation: Conversation): void {
-
+    this.messages = [];
+    this.currentPage = 1
     this.receiverId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
     this.selectedConversation =  conversation
     console.log('selectedConversation', this.selectedConversation);
     this.router.navigate(['/chat/user', this.receiverId]);
   }
 
+loadMessagesByUser(userId: number, page: number = 1): void {
+  if (this.loading) return;
+  this.loading = true;
+  this.svc.getMessagesByUser(userId, page).subscribe({
+    next: (response) => {
+      if (page === 1) {
+        this.messages = response.data.reverse();
+        this.showMessages = true;
+      } else {
+        this.messages = [...response.data.reverse(), ...this.messages];
+        this.showMessages = true;
+      }
+  
+      this.currentPage = response.meta.current_page[0];
+      this.groupedMessages = this.groupMessagesByDate(this.messages);
+      this.hasMoreMessages = !!response.meta.next_page_url;
+      this.loading = false;
+    },
+    error: () => {
+      this.loading = false;
+    }
+  });
+}
 
 
-  loadMessagesByUser(userId: number): void {
-      this.loading = true;
-      this.svc.getMessagesByUser(userId)
-
-      .subscribe({
-        next: (response: any) => {
-          
-          this.showMessages = true;
-          this.messages = response.data.reverse() || response;
-          this.groupedMessages = this.groupMessagesByDate(this.messages);
-
-          console.log('Messages loaded res:', response);
-          console.log('Messages loaded:', this.messages);
-          this.loading = false;
-        },
-        error: (error: any) => {
-          this.loading = false;
-          this.errMessage = 'Failed to load conversations';
-          console.error('Error fetching conversations:', error);
-        }
-    });
+  onScroll(event: any): void {
+    const scrollTop = event.target.scrollTop;
+    if (scrollTop < 100 && this.hasMoreMessages && !this.loading) {
+      this.loadMessagesByUser(this.receiverId, this.currentPage + 1);
+    }
   }
 
   handleSendMessage(event: { message: string, attachments: File | null, receiverId: number }) :void {
@@ -183,7 +192,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
       this.storeMessage(event.receiverId, formData);
       this.loadConversations();
-      this.loadMessagesByUser(this.receiverId);
+      this.loadMessagesByUser(this.receiverId, this.currentPage);
   }
 
 
@@ -208,7 +217,6 @@ export class ChatComponent implements OnInit, OnDestroy {
   filterConversations(term: string): void {
     this.searchTerm = term;
     if (!term) {
-      // Reset to full list
       this.conversations = [...this.localConversations];
       return;
     }

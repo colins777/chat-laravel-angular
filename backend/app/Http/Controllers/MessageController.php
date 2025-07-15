@@ -17,43 +17,33 @@ use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
 { 
-    public function getMessagesByUser(int $userId)
+    public function getMessagesByUser(Request $request, int $userId)
     {
+        $currentUser = auth()->id();
+        $perPage = $request->input('per_page', 30); // Allow dynamic per_page
 
-    $currentUser = auth()->id();
-    //Log::info('Fetching messages between user ' . $currentUser . ' and user ' . $userId);
-    $messages = Message::where(function($query) use ($currentUser, $userId) {
-            $query->whereIn('sender_id', [$currentUser, $userId])
-                  ->whereIn('receiver_id', [$currentUser, $userId]);
-        })
-        ->whereColumn('sender_id', '!=', 'receiver_id')
-        ->latest()
-       // ->orderBy('created_at', 'asc')
-        ->paginate(10);
-        //return $messages->toArray();
-        return MessageResource::collection($messages);
-        //$reversed = array_reverse($original, true);
-
-    }
-
-
-    public function loadOlder(Message $message)
-    {
-
-        $messages = Message::where('created_at', '<', $message->created_at)
-            ->where(function ($query) use ($message) {
-                $query->where('sender_id', $message->sender_id)
-                    ->where('receiver_id', $message->receiver_id)
-                    ->orWhere('sender_id', $message->receiver_id)
-                    ->where('receiver_id', $message->sender_id)
-                ;
+        $query = Message::where(function($query) use ($currentUser, $userId) {
+                $query->whereIn('sender_id', [$currentUser, $userId])
+                    ->whereIn('receiver_id', [$currentUser, $userId]);
             })
-            ->latest()
-            ->paginate(10);
-        
+            ->whereColumn('sender_id', '!=', 'receiver_id')
+            ->orderByDesc('created_at');
 
-     //   return MessageResource::collection($messages);
+        $messages = $query->paginate($perPage);
+        //Log::info('current_page ' . $messages->currentPage());
+        return MessageResource::collection($messages)
+            ->additional([
+                'meta' => [
+                    'current_page' => $messages->currentPage(),
+                    'last_page' => $messages->lastPage(),
+                    'per_page' => $messages->perPage(),
+                    'total' => $messages->total(),
+                    'next_page_url' => $messages->nextPageUrl(),
+                    'prev_page_url' => $messages->previousPageUrl(),
+                ]
+            ]);
     }
+
 
     public function store(StoreMessageRequest $request)
     {

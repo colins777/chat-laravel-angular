@@ -35,9 +35,9 @@ export class HttpTokenService {
   getConversations(): Observable<any> {
     return this.http.get<any>(API_ENDPOINTS.CONVERSATIONS.GET_ALL_CONVERSATIONS, {withCredentials: true});
   }
-
-  getMessagesByUser(userId: number): Observable<any> {
-    return this.http.get<any>(`${API_ENDPOINTS.MESSAGES.GET_MESSAGES_BY_USER}/${userId}`, {withCredentials: true});
+  
+  getMessagesByUser(userId: number, page: number = 1): Observable<any> {
+    return this.http.get<any>(`${API_ENDPOINTS.MESSAGES.GET_MESSAGES_BY_USER}/${userId}?page=${page}`, {withCredentials: true});
   }
 
   storeMessage(receiverId: number, FormData: FormData): Observable<any> {

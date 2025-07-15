@@ -48,7 +48,9 @@
     <!--End Chat Header -->
 
     <!-- Messages block-->
-<div class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#121212]">
+<div class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#121212]"
+    (scroll)="onScroll($event)"
+>
 
   <app-loader-wrapper [loading]="loading" [error]="error"></app-loader-wrapper>
 
