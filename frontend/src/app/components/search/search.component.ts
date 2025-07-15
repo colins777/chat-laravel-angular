@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-search',
@@ -8,6 +9,18 @@ import { FormsModule } from '@angular/forms';
   imports: [
     CommonModule,
     FormsModule
+  ],
+  animations: [
+    trigger('fadeInOut', [
+      state('void', style({ opacity: 0, height: '0px', overflow: 'hidden' })),
+      state('*', style({ opacity: 1, height: '*', overflow: 'hidden' })),
+      transition(':enter', [
+        animate('300ms ease-in')
+      ]),
+      transition(':leave', [
+        animate('300ms ease-out')
+      ])
+    ])
   ],
   template: `
     <input
@@ -17,7 +30,7 @@ import { FormsModule } from '@angular/forms';
       [placeholder]="placeholder"
       [ngClass]="inputClass"
       [ngStyle]="inputStyle"
-      class="w-full px-3 py-1 rounded bg-[#222] text-white focus:outline-none"
+      @fadeInOut
     />
   `
 })

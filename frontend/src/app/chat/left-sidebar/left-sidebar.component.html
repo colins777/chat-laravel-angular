@@ -1,10 +1,14 @@
 <!-- Header with toggle -->
   <div class="p-4 flex flex-col border-b border-gray-700">
     <!-- Title & search -->
-    <div class="flex justify-between w-100%">
-      <div class="flex items-center space-x-2">
-        <h2 class="text-4xl font-semibold">Chats</h2>
-        <button class="p-2 rounded hover:bg-[#222] focus:outline-none"
+    <div class="flex w-full justify-between">
+      <div class="flex space-x-2 justify-between">
+        <h2 *ngIf="!showSearch" class="text-4xl font-semibold"
+        @fadeInOut
+        >
+          Chats
+        </h2>
+        <button class="rounded hover:bg-[#222] focus:outline-none ml-[100%]"
                 (click)="onSearchToggle()"
                 aria-label="Search">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -17,7 +21,7 @@
       <div *ngIf="showSearch" class="left-auto">
         <app-search
           [placeholder]="'Chats durchsuchen...'"
-          [inputClass]="'custom-input-class'"
+          [inputClass]="'w-full px-3 py-1 rounded bg-[#222] text-white focus:outline-none'"
           [inputStyle]="{ 'background': '#333' }"
           [searchTerm]="searchTerm"
           (searchTermChange)="onSearchInputChange($event)"

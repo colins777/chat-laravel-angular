@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LoaderWrapperComponent } from '../../components/UI/loader-wrapper/loader-wrapper.component';
 import { searchComponent } from '../../components/search/search.component';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-left-sidebar',
@@ -13,6 +14,18 @@ import { searchComponent } from '../../components/search/search.component';
     FormsModule,
     LoaderWrapperComponent,
     searchComponent
+  ],
+    animations: [
+    trigger('fadeInOut', [
+      state('void', style({ opacity: 0, height: '0px', overflow: 'hidden' })),
+      state('*', style({ opacity: 1, height: '*', overflow: 'hidden' })),
+      transition(':enter', [
+        animate('300ms ease-in')
+      ]),
+      transition(':leave', [
+        animate('300ms ease-out')
+      ])
+    ])
   ],
   templateUrl: './left-sidebar.component.html'
 })
