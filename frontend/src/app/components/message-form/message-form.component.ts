@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { ButtonIconSendMessageComponent} from '../UI/button-icon-send-message';
 
 
 @Component({
@@ -16,7 +17,7 @@ import { CommonModule } from '@angular/common';
     MatInputModule,
     MatIconModule,
     MatButtonModule,
-    
+    ButtonIconSendMessageComponent,
   ],
   templateUrl: './message-form.component.html',
   styleUrl: './message-form.component.css'
@@ -26,6 +27,8 @@ export class MessageFormComponent {
   selectedImage: File | null = null;
   fileError: string | null = null;
 
+@Input() disabledMessageInput: boolean = false;
+@Input() messageIsSending: boolean = false;
 @Input() receiverId!: number;
 @Input() errorMessage!: string;
 @Output() messageSend = new EventEmitter<{ message: string, attachments: File | null,receiverId: number }>();

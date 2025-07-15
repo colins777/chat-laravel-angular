@@ -86,8 +86,12 @@ class MessageController extends Controller
         }
 
         //send message was created event to the frontend
-        //SocketMessage::dispatch($message);
-
+        try {
+            SocketMessage::dispatch($message);
+        } catch (\Exception $e) {
+            Log::info('Error: socketMessage::dispatch', ['message' => $e]);
+        }
+        
         Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
     
         return new MessageResource($message);

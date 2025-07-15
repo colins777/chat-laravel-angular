@@ -52,13 +52,13 @@ export class ChatComponent implements OnInit, OnDestroy {
   searchTerm: string = '';
   filter = 'unread';
   showMessages: boolean = false;
-  newMessage = '';
   receiverId: number = 0;
   groupedMessages: { [label: string]: Message[] } = {};
 
   loading: boolean = false;
   error: string = '';
   sendMessageError: string = '';
+  messageIsSending: boolean = false;
 
     constructor(
       private svc: HttpTokenService,
@@ -188,13 +188,18 @@ export class ChatComponent implements OnInit, OnDestroy {
 
 
   storeMessage(receiverId: number, formData: FormData): void {
+
+    this.messageIsSending = true;
+
     this.svc.storeMessage(receiverId, formData)
     .subscribe({
       next: (response: any) => {
+        this.messageIsSending = false;
         console.log('Conversations loaded:', this.conversations);
       },
       error: (error) => {
         this.sendMessageError = error.error.message;
+         this.messageIsSending = false;
         console.error('Error fetching conversations:', error);
       }
     });
