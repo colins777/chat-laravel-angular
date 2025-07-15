@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -67,7 +67,6 @@ export class ChatComponent implements OnInit, OnDestroy {
       private route: ActivatedRoute
     ) {}
 
-
   //addEcho service for listening to events
   listenToEchoEvents(): void {}
 
@@ -78,14 +77,6 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.user = response;
           //this.listenToEchoEvents();
           this.loadConversations();
-
-          this.route.paramMap.subscribe(params => {
-          const userId = Number(params.get('userId'));
-          if (userId) {
-            this.loadMessagesByUser(userId, this.currentPage);
-        }
-      });
-        
         },
         error: (error: { error: { message: string } }) => {
           this.errMessage = error.error.message || 'An error occurred';
@@ -93,13 +84,6 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.router.navigate(['/chat']);
         }
       });
-
-      this.route.paramMap.subscribe(params => {
-        const receiverId = Number(params.get('userId'));
-        if (receiverId) {
-        this.receiverId = receiverId;
-      }
-        });
   }
 
   ngOnDestroy(): void {}
@@ -127,10 +111,6 @@ export class ChatComponent implements OnInit, OnDestroy {
       next: (response: any) => {
         this.conversations = response.data || response;
         this.localConversations = response.data || response;
-
-        if (this.selectedConversation) {
-          this.receiverId = this.user.id == this.selectedConversation.user_id_1  ? this.selectedConversation.user_id_2 : this.conversations[0].user_id_1
-        }
         this.loading = false;
       },
       error: (error: any) => {
@@ -143,15 +123,15 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   onConversationClick(conversation: Conversation): void {
     this.messages = [];
-    this.currentPage = 1
-    this.receiverId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
-    this.selectedConversation =  conversation
+    this.currentPage = 1;
+    this.receiverId = conversation.id;
+    this.selectedConversation =  conversation;
     console.log('selectedConversation', this.selectedConversation);
-    this.router.navigate(['/chat/user', this.receiverId]);
+    this.loadMessagesByUser(this.receiverId, this.currentPage)
   }
 
 loadMessagesByUser(userId: number, page: number = 1): void {
-  if (this.loading) return;
+
   this.loading = true;
   this.svc.getMessagesByUser(userId, page).subscribe({
     next: (response) => {
@@ -174,7 +154,6 @@ loadMessagesByUser(userId: number, page: number = 1): void {
   });
 }
 
-
   onScroll(event: any): void {
     const scrollTop = event.target.scrollTop;
     if (scrollTop < 100 && this.hasMoreMessages && !this.loading) {
@@ -192,9 +171,7 @@ loadMessagesByUser(userId: number, page: number = 1): void {
 
       this.storeMessage(event.receiverId, formData);
       this.loadConversations();
-      this.loadMessagesByUser(this.receiverId, this.currentPage);
   }
-
 
   storeMessage(receiverId: number, formData: FormData): void {
 
@@ -205,6 +182,7 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       next: (response: any) => {
         this.messageIsSending = false;
         console.log('Conversations loaded:', this.conversations);
+        this.loadMessagesByUser(this.receiverId, 1);
       },
       error: (error) => {
         this.sendMessageError = error.error.message;
