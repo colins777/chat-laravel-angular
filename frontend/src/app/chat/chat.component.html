@@ -8,7 +8,7 @@
       [searchTerm]="searchTerm"
       [filter]="filter"
       (conversationClick)="onConversationClick($event)"
-      (searchTermChange)="searchTerm = $event"
+      (searchTermChange)="filterConversations($event)"
       (showSearchChange)="showSearch = $event"
       (filterChange)="filter = $event"
     ></app-left-sidebar>

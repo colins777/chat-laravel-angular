@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { Conversations } from '../../interfaces/Conversation';
+import { Component, Input, Output, EventEmitter, input } from '@angular/core';
+import { Conversation } from '../../interfaces/Conversation';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LoaderWrapperComponent } from '../../components/UI/loader-wrapper/loader-wrapper.component';
+import { searchComponent } from '../../components/search/search.component';
 
 @Component({
   selector: 'app-left-sidebar',
@@ -10,26 +11,29 @@ import { LoaderWrapperComponent } from '../../components/UI/loader-wrapper/loade
   imports: [
     CommonModule,
     FormsModule,
-    LoaderWrapperComponent
+    LoaderWrapperComponent,
+    searchComponent
   ],
   templateUrl: './left-sidebar.component.html'
 })
 export class LeftSidebarComponent {
-  @Input() conversations: Conversations[] = [];
-  @Input() selectedConversation: Conversations | null = null;
+  @Input() conversations: Conversation[] = [];
+  @Input() selectedConversation: Conversation | null = null;
   @Input() showSearch: boolean = false;
   @Input() searchTerm: string = '';
   @Input() filter: string = 'unread';
-
-  @Output() conversationClick = new EventEmitter<Conversations>();
+ 
+  @Output() conversationClick = new EventEmitter<Conversation>();
   @Output() searchTermChange = new EventEmitter<string>();
   @Output() showSearchChange = new EventEmitter<boolean>();
   @Output() filterChange = new EventEmitter<string>();
 
   loading: boolean = false;
   error: string = '';
+  filteredConversations: Conversation[] = [];
 
-  onConversationClick(conversation: Conversations) {
+
+  onConversationClick(conversation: Conversation) {
     this.conversationClick.emit(conversation);
   }
 
@@ -37,11 +41,8 @@ export class LeftSidebarComponent {
     this.showSearchChange.emit(!this.showSearch);
   }
 
-  onSearchTermChange(term: string) {
+  onSearchInputChange(term: string) {
     this.searchTermChange.emit(term);
   }
 
-  onFilterChange(filter: string) {
-    this.filterChange.emit(filter);
-  }
 }

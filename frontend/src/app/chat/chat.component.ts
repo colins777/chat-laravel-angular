@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { HttpTokenService } from '../services/http-token.service';
-import { Conversations } from '../interfaces/Conversation';
+import { Conversation } from '../interfaces/Conversation';
 import { Message } from '../interfaces/Message';
 import { MessageFormComponent } from '../components/message-form/message-form.component';
 import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
@@ -41,17 +41,16 @@ import { getDateLabel } from '../helpers/message-date-label.helper';
 export class ChatComponent implements OnInit, OnDestroy {
   errMessage!: string | null;
   user!: any | null;
-  localConversations: any[] = [];
-  sortedConversations: any[] = [];
+
+  localConversations: Conversation[] = [];
+  conversations: Conversation[] = [];
+  selectedConversation: Conversation | null = null;
 
   messages: Message [] = [];
-  conversations: Conversations[] = [];
   image: string | null = null;
   showSearch: boolean = false;
   searchTerm: string = '';
   filter = 'unread';
-
-  selectedConversation:Conversations | null = null;
   showMessages: boolean = false;
   newMessage = '';
   receiverId: number = 0;
@@ -76,10 +75,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response: any) => {
           this.user = response;
-
-          this.listenToEchoEvents();
-
-          console.log('User info response: ', response);
+          //this.listenToEchoEvents();
           this.loadConversations();
 
           this.route.paramMap.subscribe(params => {
@@ -101,6 +97,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           const receiverId = Number(params.get('userId'));
           if (receiverId) {
           this.receiverId = receiverId;
+          //@TODO need to fix 
           //this.loadMessagesByUser(receiverId);
         }
         });
@@ -124,6 +121,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     .subscribe({
       next: (response: any) => {
         this.conversations = response.data || response;
+        this.localConversations = response.data || response;
 
         if (this.selectedConversation) {
           this.receiverId = this.user.id == this.selectedConversation.user_id_1  ? this.selectedConversation.user_id_2 : this.conversations[0].user_id_1
@@ -142,13 +140,15 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
   }
 
-  onConversationClick(conversation: Conversations): void {
+  onConversationClick(conversation: Conversation): void {
 
     this.receiverId = this.user.id == conversation.user_id_1  ? conversation.user_id_2 : conversation.user_id_1
     this.selectedConversation =  conversation
     console.log('selectedConversation', this.selectedConversation);
     this.router.navigate(['/chat/user', this.receiverId]);
   }
+
+
 
   loadMessagesByUser(userId: number): void {
       this.loading = true;
@@ -173,7 +173,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
   }
 
-  handleSendMessage(event: { message: string, attachments: File | null, receiverId: number }) {
+  handleSendMessage(event: { message: string, attachments: File | null, receiverId: number }) :void {
       const formData = new FormData();
       formData.append('message', event.message);
       formData.append('receiver_id', event.receiverId.toString());
@@ -199,4 +199,20 @@ export class ChatComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  filterConversations(term: string): void {
+    this.searchTerm = term;
+    if (!term) {
+      // Reset to full list
+      this.conversations = [...this.localConversations];
+      return;
+    }
+
+    const searchTerm = term.toLowerCase().trim();
+    this.conversations = this.localConversations.filter(conversation =>
+      conversation.name &&
+      conversation.name.toLowerCase().includes(searchTerm)
+    );
+  }
+
 }
