@@ -64,6 +64,17 @@ php artisan user:change-password user@example.com 123456
 php artisan reverb:start 
 ```
 
+##Run reverb server --debug mode
+```bash
+php artisan reverb:start --debug
+```
+
+##Clear Laravel cache
+```bash
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+```
 
 ##Running the Frontend (Angular) – frontend folder
 Go to the frontend folder: cd frontend
@@ -78,6 +89,11 @@ npm install
 ng serve
 ```
 The application will be available at http://localhost:4200
+
+##clear Angular cache
+```bash
+ng cache clean
+```
 
 ##Go to login page - http://localhost:4200/login -> redirect to http://localhost:4200/chat
 

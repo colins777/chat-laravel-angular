@@ -3,7 +3,7 @@ import { provideRouter } from '@angular/router';
 
 import { routes } from './app.routes';
 import { provideHttpClient, withFetch, withInterceptors, withXsrfConfiguration } from '@angular/common/http';
-import { httpTokenInterceptorInterceptor } from './services/http-token-interceptor.interceptor';
+import { httpTokenInterceptor } from './services/http-token-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -12,7 +12,7 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       withXsrfConfiguration({cookieName: 'XSRF-TOKEN', headerName: 'Xsrf-Headers'}),
-      withInterceptors([httpTokenInterceptorInterceptor])
+      withInterceptors([httpTokenInterceptor])
     )
   ]
 };
