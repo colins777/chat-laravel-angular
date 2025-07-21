@@ -1,7 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { HttpTokenService } from './services/http-token.service';
-//import { EchoService } from './services/echo.service';
 
 @Component({
   selector: 'app-root',
@@ -11,11 +10,10 @@ import { HttpTokenService } from './services/http-token.service';
 })
 export class AppComponent implements OnInit{
 
-  title = 'frontend';
+  title = 'Chat';
 
   constructor(
-    private tSvc:HttpTokenService,
-   // private echoService: EchoService
+    private tSvc:HttpTokenService
   ) {}
 
   ngOnInit(): void {

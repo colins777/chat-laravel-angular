@@ -4,14 +4,16 @@ import { inject } from '@angular/core';
 export const httpTokenInterceptor: HttpInterceptorFn = (req, next) => {
 
   const tokenEx = inject(HttpXsrfTokenExtractor);
-  const crsfTokenName = 'X-XSRF-TOKEN';
+  const xsrfTokenName = 'X-XSRF-TOKEN';
 
-  const crsfToken = tokenEx.getToken() as string;
+  const xsrfToken = tokenEx.getToken() as string;
 
-  if (crsfToken != null && !req.headers.has(crsfTokenName)) {
-    req = req.clone({headers: req.headers.set(crsfTokenName, crsfToken)});
-
-    req.clone({headers: req.headers.set('Referer', 'http://localhost:4200')});
+  if (xsrfToken != null && !req.headers.has(xsrfTokenName)) {
+    req = req.clone({
+      headers: req.headers
+        .set(xsrfTokenName, xsrfToken)
+        .set('Referer', 'http://localhost:4200')
+    });
   }
 
   return next(req);

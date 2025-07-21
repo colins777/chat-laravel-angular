@@ -16,7 +16,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/conversations', [ConversationController::class, 'index']);
     Route::get('/messages/{user}', [MessageController::class, 'getMessagesByUser']);
     Route::post('/message-store', [MessageController::class, 'store']);
-
-    // Broadcast authentication routes
+    
     Broadcast::routes();
 });

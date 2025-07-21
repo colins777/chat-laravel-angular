@@ -15,10 +15,15 @@ import { MessageFormComponent } from '../components/message-form/message-form.co
 import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
 import { LoaderWrapperComponent } from '../components/UI/loader-wrapper/loader-wrapper.component';
 import { getDateLabel } from '../helpers/message-date-label.helper';
+import { EchoService } from '../services/echo.service';
+import { HttpClient } from '@angular/common/http';
+import { User } from '../interfaces/User';
+
 
 @Component({
   selector: 'app-chat',
   standalone: true,
+  //providers: [EchoService],
   imports: [
     CommonModule,        
     MatSidenavModule,
@@ -35,6 +40,8 @@ import { getDateLabel } from '../helpers/message-date-label.helper';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
 })
+
+
 
 export class ChatComponent implements OnInit, OnDestroy {
   errMessage!: string | null;
@@ -59,23 +66,44 @@ export class ChatComponent implements OnInit, OnDestroy {
   messageIsSending: boolean = false;
 
   currentPage: number = 1;
-  hasMoreMessages: boolean = true;
+  hasMoreMessages: boolean = true
+
+  onlineUsers: User[] = [];
 
     constructor(
       private svc: HttpTokenService,
       private router: Router,
-      private route: ActivatedRoute
+      private route: ActivatedRoute,
+      private echo: EchoService,
+      private http: HttpClient,
     ) {}
 
   //addEcho service for listening to events
-  listenToEchoEvents(): void {}
+  listenToEchoEvents(): void {
+    if (!this.user) return;
+    const echo = this.echo.getInstance();
+
+    echo.join('online')
+      .here((users: User[]) => {
+        console.log('WS online', users)
+      })
+      .joining((users:any) => {
+          console.log('WS joining', users)
+      })
+      .leaving((users:any) => {
+          console.log('WS leaving', users)
+      })
+      .error((e:any) => {
+
+      });
+
+  }
 
   ngOnInit(): void {
     this.svc.getUser()
       .subscribe({
         next: (response: any) => {
           this.user = response;
-          //this.listenToEchoEvents();
           this.loadConversations();
         },
         error: (error: { error: { message: string } }) => {
@@ -86,7 +114,12 @@ export class ChatComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy(): void {}
+  ngOnDestroy(): void {
+    //  this.echo.disconnect();
+      const echo = this.echo.getInstance();
+      console.log('ngOnDestroy', echo)
+      echo.disconnect();
+  }
 
   groupMessagesByDate(messages: Message[]): { [label: string]: Message[] } {
     const groups: { [label: string]: Message[] } = {};
@@ -112,6 +145,8 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.conversations = response.data || response;
         this.localConversations = response.data || response;
         this.loading = false;
+
+        this.listenToEchoEvents();
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';

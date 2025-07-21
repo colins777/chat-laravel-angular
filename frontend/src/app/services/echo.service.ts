@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import { SETTINGS_WS } from '../constants/settings-ws';
+import axios from 'axios'; 
 
 @Injectable({
   providedIn: 'root',
 })
 export class EchoService {
-  private echo: Echo<any>;
+  private echo!: Echo<any>;
 
   constructor() {
     window.Pusher = Pusher;
@@ -20,9 +21,39 @@ export class EchoService {
       wssPort: SETTINGS_WS.WS_PORT ?? 443,
       forceTLS: false,
       enabledTransports: ['ws', 'wss'],
-      authEndpoint: SETTINGS_WS.ECHO_AUTH_ENDPOINT,
-      withCredentials: true,
-      //csrfToken: this.getCookie('XSRF-TOKEN'),
+      authorizer: (channel: any, options: any) => {
+        return {
+          authorize: (socketId: string, callback: Function) => {
+           
+            const xsrfToken = this.getCookie('XSRF-TOKEN');
+            
+            axios.post(
+              'http://localhost:8000/api/broadcasting/auth',
+              {
+                socket_id: socketId,
+                channel_name: channel.name,
+              },
+              {
+                headers: {
+                  Accept: 'application/json',
+                  'X-XSRF-TOKEN': xsrfToken ?? '',
+                },
+                withCredentials: true,
+              }
+            )
+            .then((response) => {
+              if(response.data && !response.data.error) {
+                callback(false, response.data);
+              } else {
+                callback(true, response.data?.error ?? 'Auth error');
+              }
+            })
+            .catch((error) => {
+              callback(true, error);
+            });
+          }
+        };
+      },
     });
   }
 
