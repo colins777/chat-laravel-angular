@@ -23,7 +23,6 @@ import { User } from '../interfaces/User';
 @Component({
   selector: 'app-chat',
   standalone: true,
-  //providers: [EchoService],
   imports: [
     CommonModule,        
     MatSidenavModule,
@@ -61,6 +60,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   groupedMessages: { [label: string]: Message[] } = {};
 
   loading: boolean = false;
+  loadingConversations: boolean = false;
   error: string = '';
   sendMessageError: string = '';
   messageIsSending: boolean = false;
@@ -80,23 +80,57 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   //addEcho service for listening to events
   listenToEchoEvents(): void {
-    if (!this.user) return;
+   // if (!this.user) return;
     const echo = this.echo.getInstance();
 
+    console.log('listen!')
+
     echo.join('online')
-      .here((users: User[]) => {
-        console.log('WS online', users)
+      .here((usersOnline: User[]) => {
+        console.log('WS online', usersOnline)
+
+        this.onlineUsers = usersOnline;
+
+        this.conversations.forEach((conversation) => {
+          if (usersOnline.length > 0) {
+          usersOnline.map((user) => {
+            if (conversation.id === user.id && this.user.id !== conversation.id) {
+              conversation.online = true;
+            }
+          })
+        }});
+        console.log('conversation here', this.conversations)
       })
-      .joining((users:any) => {
-          console.log('WS joining', users)
+      .joining((usersOnline:any) => {
+          console.log('WS joining', usersOnline)
+          
+          this.conversations.forEach((conversation) => {
+            const users = Array.isArray(usersOnline) ? usersOnline : [usersOnline];
+            users.map((user: any) => {
+              if (conversation.id === user.id && this.user.id !== conversation.id) {
+                conversation.online = true;
+              }
+            });
+        });
       })
-      .leaving((users:any) => {
-          console.log('WS leaving', users)
+      .leaving((usersOnline:any) => {
+          console.log('WS leaving', usersOnline)
+
+          this.conversations.forEach((conversation) => {
+            const users = Array.isArray(usersOnline) ? usersOnline : [usersOnline];
+            users.map((user: any) => {
+              if (conversation.id === user.id && this.user.id !== conversation.id) {
+                conversation.online = false;
+              }
+            });
+        });
+
+
+          console.log('conversations leaving', this.conversations)
       })
       .error((e:any) => {
-
+        console.warn('WS error', e)
       });
-
   }
 
   ngOnInit(): void {
@@ -137,20 +171,19 @@ export class ChatComponent implements OnInit, OnDestroy {
     return groups;
   }
   loadConversations(): void {
-  this.loading = true;
+  this.loadingConversations = true;
   
   this.svc.getConversations()
     .subscribe({
       next: (response: any) => {
         this.conversations = response.data || response;
         this.localConversations = response.data || response;
-        this.loading = false;
-
+        this.loadingConversations = false;
         this.listenToEchoEvents();
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';
-        this.loading = false;
+        this.loadingConversations = false;
         console.error('Error fetching conversations:', error);
       }
     });
@@ -183,7 +216,8 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       this.hasMoreMessages = !!response.meta.next_page_url;
       this.loading = false;
     },
-    error: () => {
+    error: (error: any) => {
+      console.warn('error', error.message)
       this.loading = false;
     }
   });

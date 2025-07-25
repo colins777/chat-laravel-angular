@@ -12,6 +12,6 @@ import { FormsModule } from '@angular/forms';
   ],
 })
 export class LoaderWrapperComponent {
-  @Input() loading = false;
+  @Input() loading:boolean = false;
   @Input() error: string | null = null;
 }

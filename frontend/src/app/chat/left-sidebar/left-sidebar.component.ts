@@ -35,16 +35,15 @@ export class LeftSidebarComponent {
   @Input() showSearch: boolean = false;
   @Input() searchTerm: string = '';
   @Input() filter: string = 'unread';
+  @Input() loadingConversations: boolean = false;
  
   @Output() conversationClick = new EventEmitter<Conversation>();
   @Output() searchTermChange = new EventEmitter<string>();
   @Output() showSearchChange = new EventEmitter<boolean>();
   @Output() filterChange = new EventEmitter<string>();
 
-  loading: boolean = false;
   error: string = '';
   filteredConversations: Conversation[] = [];
-
 
   onConversationClick(conversation: Conversation) {
     this.conversationClick.emit(conversation);

@@ -12,4 +12,5 @@ export interface Conversation {
   is_read: boolean;
   avatar: string | null;
   email: string;
+  online: boolean;
 }
