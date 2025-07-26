@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -42,7 +42,9 @@ import { User } from '../interfaces/User';
 
 
 
-export class ChatComponent implements OnInit, OnDestroy {
+export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild('messagesContainer') messagesContainer!: ElementRef;
+  
   errMessage!: string | null;
   user!: any | null;
 
@@ -66,7 +68,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   messageIsSending: boolean = false;
 
   currentPage: number = 1;
-  hasMoreMessages: boolean = true
+  hasMoreMessages: boolean = true;
+  shouldScrollToBottom: boolean = false;
 
   onlineUsers: User[] = [];
 
@@ -155,6 +158,25 @@ export class ChatComponent implements OnInit, OnDestroy {
       echo.disconnect();
   }
 
+    ngAfterViewChecked(): void {
+    if (this.shouldScrollToBottom) {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }
+  }
+
+  scrollToBottom(): void {
+    try {
+      const element = this.messagesContainer.nativeElement;
+      element.scrollTo({
+        top: element.scrollHeight,
+        behavior: 'smooth'
+      });
+    } catch (err) {
+      console.error('Error scrolling to bottom:', err);
+    }
+  }
+
   groupMessagesByDate(messages: Message[]): { [label: string]: Message[] } {
     const groups: { [label: string]: Message[] } = {};
     const seenIds = new Set<number>();
@@ -195,7 +217,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.receiverId = conversation.id;
     this.selectedConversation =  conversation;
     console.log('selectedConversation', this.selectedConversation);
-    this.loadMessagesByUser(this.receiverId, this.currentPage)
+    this.loadMessagesByUser(this.receiverId, this.currentPage);
+    this.shouldScrollToBottom = true;
   }
 
 loadMessagesByUser(userId: number, page: number = 1): void {
@@ -206,6 +229,7 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       if (page === 1) {
         this.messages = response.data.reverse();
         this.showMessages = true;
+        this.shouldScrollToBottom = true;
       } else {
         this.messages = [...response.data.reverse(), ...this.messages];
         this.showMessages = true;
@@ -252,6 +276,7 @@ loadMessagesByUser(userId: number, page: number = 1): void {
         this.messageIsSending = false;
         console.log('Conversations loaded:', this.conversations);
         this.loadMessagesByUser(this.receiverId, 1);
+        this.shouldScrollToBottom = true;
       },
       error: (error) => {
         this.sendMessageError = error.error.message;
