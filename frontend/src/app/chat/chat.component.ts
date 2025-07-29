@@ -86,6 +86,31 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
    // if (!this.user) return;
     const echo = this.echo.getInstance();
 
+    this.conversations.forEach((conversation, i) => {
+      const otherUserId = conversation.id;
+      const sortedIds = [this.user.id, otherUserId].sort().join('-');
+      const channelName = `message.user.${sortedIds}`;
+
+      echo.private(channelName)
+        .listen('SocketMessage', (data: any) => {
+          const newMessage: Message = data.message;
+
+          // Show message if it belongs to the current selected conversation
+          if (this.selectedConversation && this.selectedConversation.id === newMessage.sender_id) {
+            this.messages.push(newMessage);
+
+            console.log('messages:', this.messages)
+            this.groupedMessages = this.groupMessagesByDate(this.messages);
+            this.scrollToBottom();
+
+          }
+          this.updateConversationsWithLastMessage(newMessage);
+           
+
+          console.log('newMessage:', newMessage)
+        });
+    });
+
     console.log('listen!')
 
     echo.join('online')
@@ -298,6 +323,15 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       conversation.name &&
       conversation.name.toLowerCase().includes(searchTerm)
     );
+  }
+
+  updateConversationsWithLastMessage(message: Message): void {
+   this.conversations.forEach((conversation) => {
+      if (conversation.id === message.sender_id) {
+        conversation.last_message = message.message;
+        conversation.last_message_date = new Date(message.created_at);
+      }
+    });
   }
 
 }

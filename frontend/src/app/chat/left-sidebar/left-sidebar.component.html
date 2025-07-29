@@ -50,16 +50,13 @@
   
   <div class="flex-1 ">
     <ul class="flex flex-1 flex-col overflow-y-auto max-h-screen">
-
-    
-     
       <li *ngFor="let conversation of conversations"
           class="">
         <a class="block p-4 hover:bg-[#1e1e1e] cursor-pointer transition-colors duration-200"
            [class.bg-[#1e1e1e]]="selectedConversation?.id === conversation.id"
            (click)="onConversationClick(conversation)">
           <div class="flex justify-between space-x-3 border-b border-gray-700 py-3">
-            <div class="flex items-center space-x-3">
+            <div class="grid grid-cols-[50px_1fr] items-center space-x-3">
               <div class="relative inline-block">
                 <img [src]="conversation.avatar"
                      alt="Avatar"
