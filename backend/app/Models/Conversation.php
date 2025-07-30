@@ -42,7 +42,7 @@ class Conversation extends Model
             'conversations.user_id_2'
         ])
             ->where('users.id', '!=', $userId)
-            ->leftJoin('conversations', function ($join) use ($userId) {
+            ->join('conversations', function ($join) use ($userId) {
                 $join->on('conversations.user_id_1', '=', 'users.id')
                 ->where('conversations.user_id_2', '=', $userId)
                     ->orWhere(function ($query) use ($userId) {

@@ -50,15 +50,4 @@ class ConversationController extends Controller
     {
        
     }
-
-    //@TODO need to fix
-    public static function getQuantityUnreadMessagesInConversation($conversationId)
-    {
-        $conversation = Conversation::find($conversationId);
-        if (!$conversation) {
-            return 0;
-        }
-
-        return $conversation->messages()->where('is_read', false)->count();
-    }
 }

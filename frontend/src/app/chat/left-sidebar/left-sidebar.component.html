@@ -55,7 +55,7 @@
         <a class="block p-4 hover:bg-[#1e1e1e] cursor-pointer transition-colors duration-200"
            [class.bg-[#1e1e1e]]="selectedConversation?.id === conversation.id"
            (click)="onConversationClick(conversation)">
-          <div class="flex justify-between space-x-3 border-b border-gray-700 py-3">
+          <div class="grid grid-cols-[90%_auto] gap-1 border-b border-gray-700 py-3">
             <div class="grid grid-cols-[50px_1fr] items-center space-x-3">
               <div class="relative inline-block">
                 <img [src]="conversation.avatar"
@@ -72,7 +72,7 @@
             </div>
             <div class="flex flex-col justify-between">
              <span class="text-xs">{{ conversation?.last_message_date | date:'HH:mm' }}</span>
-             <span *ngIf="(conversation?.unread_messages ?? 0) > 0" class="text-xs rounded-full object-cover shadow-xl bg-red-500 text-white px-2 py-1 w-6 h-6">
+             <span *ngIf="(conversation?.unread_messages ?? 0) > 0" class="flex justify-center items-center text-[10px] rounded-full object-cover shadow-xl bg-red-500 text-white px-2 py-1 w-6 h-6">
               {{ conversation?.unread_messages }}
              </span>
             </div>
