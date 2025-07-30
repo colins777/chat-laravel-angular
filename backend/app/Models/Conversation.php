@@ -32,35 +32,42 @@ class Conversation extends Model
     }
 
     public static function getUserConversations(User $user)
-{
-    $userId = $user->id;
-    $query = User::select([
-        'users.*', 
-        'messages.message as last_message',
-        'messages.created_at as last_message_date',
-        'conversations.user_id_1',
-        'conversations.user_id_2'
-    ])
-        ->where('users.id', '!=', $userId)
-        ->leftJoin('conversations', function ($join) use ($userId) {
-            $join->on('conversations.user_id_1', '=', 'users.id')
-            ->where('conversations.user_id_2', '=', $userId)
-                ->orWhere(function ($query) use ($userId) {
-                    $query->on('conversations.user_id_2', '=', 'users.id')
-                        ->where('conversations.user_id_1', '=', $userId);
-                });
-        })
-        ->leftJoin('messages', 'messages.id', '=', 'conversations.last_message_id')
-        ->orderBy('messages.created_at', 'desc')
-        ->orderBy('users.name')->get();
+    {
+        $userId = $user->id;
+        $query = User::select([
+            'users.*', 
+            'messages.message as last_message',
+            'messages.created_at as last_message_date',
+            'conversations.user_id_1',
+            'conversations.user_id_2'
+        ])
+            ->where('users.id', '!=', $userId)
+            ->leftJoin('conversations', function ($join) use ($userId) {
+                $join->on('conversations.user_id_1', '=', 'users.id')
+                ->where('conversations.user_id_2', '=', $userId)
+                    ->orWhere(function ($query) use ($userId) {
+                        $query->on('conversations.user_id_2', '=', 'users.id')
+                            ->where('conversations.user_id_1', '=', $userId);
+                    });
+            })
+            ->leftJoin('messages', 'messages.id', '=', 'conversations.last_message_id')
+            ->orderBy('messages.created_at', 'desc')
+            ->orderBy('users.name')->get();
 
-    // Log::info('getUserConversations', [
-    //     'request_method' => $query,
-    // ]);
-    
-    return $query;
-}
+        // Log::info('getUserConversations', [
+        //     'request_method' => $query,
+        // ]);
 
+        //add unread messages count to each conversation
+        $query->each(function ($conversation) use ($userId) {
+            $conversation->unread_messages = Message::where('receiver_id', $userId)
+                ->where('sender_id', $conversation->id)
+                ->where('is_read', 0)
+                ->count();
+        });
+        
+        return $query;
+    }
 
     public static function updateConversationWithMessage($userId1, $userId2, $message)
     {
@@ -84,52 +91,5 @@ class Conversation extends Model
             ]);
         }
 
-    }
-
-     /**
-     * Get all messages for this conversation
-     */
-    public function messages()
-    {
-        return Message::where(function ($query) {
-            $query->where('sender_id', $this->user_id1)
-                  ->where('receiver_id', $this->user_id2);
-        })->orWhere(function ($query) {
-            $query->where('sender_id', $this->user_id2)
-                  ->where('receiver_id', $this->user_id1);
-        })->orderBy('created_at', 'asc');
-    }
-
-    /**
-     * Get unread messages count for a specific user
-     */
-    public function getUnreadCountForUser($userId)
-    {
-        return $this->messages()
-                    ->where('receiver_id', $userId)
-                    ->where('is_read', false)
-                    ->count();
-    }
-
-    /**
-     * Check if conversation has unread messages for a user
-     */
-    public function hasUnreadMessages($userId): bool
-    {
-        return $this->getUnreadCountForUser($userId) > 0;
-    }
-
-    /**
-     * Mark all messages as read for a specific user
-     */
-    public function markAllAsReadForUser($userId)
-    {
-        $this->messages()
-             ->where('receiver_id', $userId)
-             ->where('is_read', false)
-             ->update([
-                 'is_read' => true,
-                 'read_at' => now()
-             ]);
     }
 }

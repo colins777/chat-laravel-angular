@@ -41,35 +41,17 @@ class Message extends Model
     /**
      * Mark message as read
      */
-    public function markAsRead()
-    {
-        $this->update([
-            'is_read' => true,
-            'read_at' => Carbon::now()
-        ]);
-    }
-
     /**
-     * Check if message is unread
+     * Mark all messages as read for a specific user
      */
-    public function isUnread(): bool
+    public static function markAsRead($receiverId, $senderId)
     {
-        return !$this->is_read;
-    }
-
-    /**
-     * Scope for unread messages
-     */
-    public function scopeUnread($query)
-    {
-        return $query->where('is_read', false);
-    }
-
-    /**
-     * Scope for read messages
-     */
-    public function scopeRead($query)
-    {
-        return $query->where('is_read', true);
+        return Message::where('receiver_id', $receiverId)
+             ->where('sender_id', $senderId)
+             ->where('is_read', 0)
+             ->update([
+                 'is_read' => 1,
+                 'read_at' => now()
+             ]);
     }
 }

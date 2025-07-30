@@ -46,4 +46,12 @@ export class HttpTokenService {
       {withCredentials: true});
   }
 
+  markAsRead(senderId: number): Observable<any> {
+    return this.http.post<any>(
+      `${API_ENDPOINTS.MESSAGES.MARK_AS_READ}`, 
+      { senderId },
+      { withCredentials: true }
+    );
+  }
+
 }

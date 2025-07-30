@@ -3,13 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Events\SocketMessage;
-use App\Events\PublicMessageSent;
 use App\Http\Requests\StoreMessageRequest;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\MessageAttachment;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Psy\Util\Str;
@@ -96,6 +94,18 @@ class MessageController extends Controller
         $message->delete();
 
         return response('', 204);
+    }
 
+    public function markAsRead(Request $request)
+    {
+        $currentUser = auth()->id();
+        $senderId = $request->input('senderId');
+        $message = Message::markAsRead($currentUser, $senderId);
+
+        if (!$message) {
+           return response()->json(['message' => 'Message not found']);
+        }
+
+        return response()->json(['message' => 'Message marked as read']);
     }
 }

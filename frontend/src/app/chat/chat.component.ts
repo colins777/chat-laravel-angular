@@ -219,7 +219,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   }
   loadConversations(): void {
   this.loadingConversations = true;
-  
+
   this.svc.getConversations()
     .subscribe({
       next: (response: any) => {
@@ -227,6 +227,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.localConversations = response.data || response;
         this.loadingConversations = false;
         this.listenToEchoEvents();
+
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';
@@ -244,6 +245,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     console.log('selectedConversation', this.selectedConversation);
     this.loadMessagesByUser(this.receiverId, this.currentPage);
     this.shouldScrollToBottom = true;
+
+    //set all unread messages to read
+    if ((this.selectedConversation?.unread_messages ?? 0) > 0) {
+      this.markAsRead(conversation.id);
+
+      this.selectedConversation.unread_messages = 0;
+    }
   }
 
 loadMessagesByUser(userId: number, page: number = 1): void {
@@ -264,6 +272,7 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       this.groupedMessages = this.groupMessagesByDate(this.messages);
       this.hasMoreMessages = !!response.meta.next_page_url;
       this.loading = false;
+
     },
     error: (error: any) => {
       console.warn('error', error.message)
@@ -330,6 +339,17 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       if (conversation.id === message.sender_id) {
         conversation.last_message = message.message;
         conversation.last_message_date = new Date(message.created_at);
+      }
+    });
+  }
+
+  markAsRead(senderId: number): void {
+    this.svc.markAsRead(senderId).subscribe({
+      next: (response: any) => {
+        console.log('markAsRead', response)
+      },
+      error: (error: any) => {
+        console.error('Error marking as read:', error);
       }
     });
   }

@@ -70,8 +70,11 @@
                 </p>
               </div>
             </div>
-            <div>
+            <div class="flex flex-col justify-between">
              <span class="text-xs">{{ conversation?.last_message_date | date:'HH:mm' }}</span>
+             <span *ngIf="(conversation?.unread_messages ?? 0) > 0" class="text-xs rounded-full object-cover shadow-xl bg-red-500 text-white px-2 py-1 w-6 h-6">
+              {{ conversation?.unread_messages }}
+             </span>
             </div>
           </div>
         </a>

@@ -10,6 +10,7 @@ export interface Conversation {
   last_message_date: Date | null;
   read_at: Date | null;
   is_read: boolean;
+  unread_messages: number | null;
   avatar: string | null;
   email: string;
   online: boolean;
