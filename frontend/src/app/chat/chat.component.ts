@@ -105,8 +105,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
           }
           this.updateConversationsWithLastMessage(newMessage);
-           
-
           console.log('newMessage:', newMessage)
         });
     });
@@ -226,8 +224,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.conversations = response.data || response;
         this.localConversations = response.data || response;
         this.loadingConversations = false;
-        this.listenToEchoEvents();
 
+        this.listenToEchoEvents();
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';
@@ -288,37 +286,6 @@ loadMessagesByUser(userId: number, page: number = 1): void {
     }
   }
 
-  handleSendMessage(event: { message: string, attachments: File | null, receiverId: number }) :void {
-      const formData = new FormData();
-      formData.append('message', event.message);
-      formData.append('receiver_id', event.receiverId.toString());
-      if (event.attachments) {
-        formData.append('attachments[]', event.attachments);
-      }
-
-      this.storeMessage(event.receiverId, formData);
-      this.loadConversations();
-  }
-
-  storeMessage(receiverId: number, formData: FormData): void {
-
-    this.messageIsSending = true;
-
-    this.svc.storeMessage(receiverId, formData)
-    .subscribe({
-      next: (response: any) => {
-        this.messageIsSending = false;
-        console.log('Conversations loaded:', this.conversations);
-        this.loadMessagesByUser(this.receiverId, 1);
-        this.shouldScrollToBottom = true;
-      },
-      error: (error) => {
-        this.sendMessageError = error.error.message;
-         this.messageIsSending = false;
-        console.error('Error fetching conversations:', error);
-      }
-    });
-  }
 
   filterConversations(term: string): void {
     this.searchTerm = term;
@@ -339,6 +306,7 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       if (conversation.id === message.sender_id) {
         conversation.last_message = message.message;
         conversation.last_message_date = new Date(message.created_at);
+        conversation.unread_messages = (conversation.unread_messages ?? 0) + 1;
       }
     });
   }

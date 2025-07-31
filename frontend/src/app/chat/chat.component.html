@@ -129,9 +129,9 @@
    
     <app-message-form 
       [receiverId]="receiverId"
-      [errorMessage]="sendMessageError"
-      (messageSend)="handleSendMessage($event)"
-      [messageIsSending]="messageIsSending"
+      [loadConversations]="loadConversations.bind(this)"
+      [loadMessagesByUser]="loadMessagesByUser.bind(this)"
+      [scrollToBottom]="scrollToBottom.bind(this)"
     ></app-message-form>
 
   </main>

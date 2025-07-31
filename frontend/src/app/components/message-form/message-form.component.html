@@ -13,7 +13,7 @@
   <input
     type="file"
     id="fileInput"
-    (change)="onImageSelected($event)"
+    (change)="onFileSelected($event)"
     accept="image/*"
     class="hidden"
   />
@@ -38,6 +38,6 @@
 </form>
 
 <!-- Error message (hidden by default) -->
-<div class="error-message w-[50%]" *ngIf="errorMessage">
+<div class="error-message w-[50%] p-2" *ngIf="errorMessage">
   {{ errorMessage }}
 </div>
