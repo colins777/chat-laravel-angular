@@ -1,43 +1,94 @@
 <form
-  class="p-4 flex items-center border-t border-gray-700 bg-[#1e1e1e]"
+  class="p-4 flex flex-col border-t border-gray-700 bg-[#1e1e1e]"
   (ngSubmit)="sendMessage()"
   enctype="multipart/form-data"
 >
+  <div class="grid grid-cols-[1fr]">
+  <!-- File Preview Section -->
+    <div class="mb-3" *ngIf="selectedFiles.length > 0">
+      <div class="text-sm text-gray-400 mb-2">Selected Files ({{ selectedFiles.length }}/{{ maxFiles }})</div>
+      <div class="flex flex-wrap gap-2">
+        <div 
+          *ngFor="let file of selectedFiles; let i = index" 
+          class="relative bg-[#2a2a2a] rounded-lg p-3 border border-gray-600 max-w-[200px]"
+        >
+          <!-- Remove button -->
+          <button 
+            type="button"
+            (click)="removeFile(i)"
+            class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700 transition-colors"
+          >
+            ×
+          </button>
+          
+          <!-- Image preview -->
+          <div *ngIf="file.type.startsWith('image/') && file.preview" class="mb-2">
+            <img 
+              [src]="file.preview" 
+              [alt]="file.name"
+              class="w-full h-24 object-cover rounded"
+            />
+          </div>
+          
+          <!-- File icon for non-images -->
+          <div *ngIf="!file.type.startsWith('image/')" class="mb-2 flex justify-center">
+            <mat-icon class="text-4xl text-gray-400 h-full">{{ messageAttachmentHelper.getFileIcon(file.type) }}</mat-icon>
+          </div>
+          
+          <!-- File info -->
+          <div class="text-xs">
+            <div class="text-white font-medium truncate" [title]="file.name">
+              {{ file.name }}
+            </div>
+            <div class="text-gray-400">
+              {{ messageAttachmentHelper.formatFileSize(file.size) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-<div class="flex justify-start items-center w-full bg-black relative">
-  <label for="fileInput" class="file-input-label ml-2 cursor-pointer absolute" title="Datei anhängen">
-    <svg xmlns="http://www.w3.org/2000/svg" class="clip-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="24" height="24">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.414 6.414a6 6 0 008.486 8.486L21 13" />
-    </svg>
-  </label>
-  <input
-    type="file"
-    id="fileInput"
-    (change)="onFileSelected($event)"
-    accept="image/*"
-    class="hidden"
-  />
-  <textarea
-    [(ngModel)]="newMessage"
-    name="message"
-    rows="2"
-    placeholder="Eine Nachricht schreiben..."
-    class="flex-1 px-4 py-2 pl-[40px] rounded bg-[#2a2a2a] text-white focus:outline-none resize-none"
-    required
-  ></textarea>
-</div>
+  <div class="grid grid-cols-[1fr_70px] gap-1">
+    <!-- Message Input Section -->
+    <div class="flex items-center w-full relative">
+      <label for="fileInput" class="file-input-label ml-2 cursor-pointer absolute" title="Attach files">
+        <svg xmlns="http://www.w3.org/2000/svg" class="clip-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="24" height="24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.414 6.414a6 6 0 008.486 8.486L21 13" />
+        </svg>
+      </label>
+      <input
+        type="file"
+        id="fileInput"
+        (change)="onFileSelected($event)"
+        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+        multiple
+        class="hidden"
+      />
+      <textarea
+        [(ngModel)]="newMessage"
+        name="message"
+        rows="2"
+        placeholder="Write a message..."
+        class="flex-1 px-4 py-2 pl-[40px] rounded bg-[#2a2a2a] text-white focus:outline-none resize-none"
+      ></textarea>
+    </div>
 
-  <app-button-icon-send-message
-          [text]="'Send'"
-          [class]="'w-full flex justify-center bg-primary text-light px-4 py-2 rounded hover:bg-red-700 transition duration-300 ease-in-out'"
-          [disabled]="disabledMessageInput"
-          type="submit"
-          [isLoading]="messageIsSending"
-  >
-  </app-button-icon-send-message>
+    <!-- Send Button -->
+    <app-button-icon-send-message
+      [text]="'Send'"
+      [class]="'w-[65px] h-[65px] p-3 flex justify-center bg-primary text-light rounded hover:bg-red-700 transition duration-300 ease-in-out'"
+      [disabled]="disabledMessageInput"
+      type="submit"
+      [isLoading]="messageIsSending"
+    >
+    </app-button-icon-send-message>
+  </div>
+
+  </div>
+    <!-- Error message -->
+  <div class="error-message w-full p-2" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
 </form>
 
-<!-- Error message (hidden by default) -->
-<div class="error-message w-[50%] p-2" *ngIf="errorMessage">
-  {{ errorMessage }}
-</div>
+

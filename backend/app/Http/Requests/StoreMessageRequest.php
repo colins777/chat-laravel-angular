@@ -20,7 +20,8 @@ class StoreMessageRequest extends FormRequest
             'message' => 'nullable|string',
             'receiver_id' => 'required|nullable|exists:users,id',
             'attachments' => 'nullable|array|max:10',
-            'attachments.=' => 'file|max:1024000'
+            //'attachments.*' => 'file|max:10240000|mimes:jpeg,jpg,png,gif,bmp,webp,pdf,doc,docx,xls,xlsx,ppt,pptx,txt,mp4,avi,mov,wmv,mp3,wav,aac'
+            'attachments.*' => 'file|max:10240000|mimes:jpeg,jpg,png,pdf,doc,docx,xls,xlsx,ppt,pptx,txt'
         ];
     }
 }

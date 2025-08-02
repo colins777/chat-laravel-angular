@@ -1,5 +1,5 @@
 export interface StoreMessage {
   message: string;
-  attachments: File | null;
+  attachments: File[] | null;
   receiverId: number;
 }

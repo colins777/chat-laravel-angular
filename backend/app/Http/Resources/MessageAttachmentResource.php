@@ -18,7 +18,7 @@ class MessageAttachmentResource extends JsonResource
             'name' => $this->name,
             'mime' => $this->mime,
             'size' => $this->size,
-            'url' => Storage::url($this->path),
+            'url' => url('storage/' . $this->path),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

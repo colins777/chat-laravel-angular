@@ -83,13 +83,37 @@
             </div>
             
             <div class="bg-[#b30000] text-white p-3 rounded-lg max-w-xs md:max-w-md shadow-lg">
-              <p class="text-sm">{{ item.message }}</p>
-              <img
-                *ngIf="item.image"
-                [src]="item.image"
-                class="mt-2 rounded max-h-48"
-                alt="Attached"
-              />
+              <p class="text-sm" *ngIf="item.message">{{ item.message }}</p>
+              
+              <!-- Attachments -->
+              <div *ngIf="item.attachments && item.attachments.length > 0" class="mt-2 space-y-2">
+                <div *ngFor="let attachment of item.attachments" class="attachment-item">
+                  <!-- Image attachment -->
+                  <div *ngIf="attachment.mime.startsWith('image/')" class="image-attachment">
+                    <img
+                      [src]="attachment.url"
+                      class="rounded max-h-48 max-w-full object-cover"
+                      [alt]="attachment.name"
+                    />
+                    <div class="text-xs text-gray-300 mt-1">{{ attachment.name }}</div>
+                  </div>
+                  
+                  <!-- File attachment -->
+                  <div *ngIf="!attachment.mime.startsWith('image/')" class="file-attachment bg-[#2a2a2a] rounded p-2">
+                    <div class="flex items-center space-x-2">
+                      <mat-icon class="text-gray-400">{{ messageAttachmentHelper.getFileIcon(attachment.mime) }}</mat-icon>
+                      <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium truncate">{{ attachment.name }}</div>
+                        <div class="text-xs text-gray-400">{{ messageAttachmentHelper.formatFileSize(attachment.size) }}</div>
+                      </div>
+                      <a [href]="attachment.url" target="_blank" class="text-blue-400 hover:text-blue-300">
+                        <mat-icon class="text-sm">download</mat-icon>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <span class="block text-xs text-right text-gray-300 mt-1">{{ item?.created_at | date:'HH:mm' }}</span>
             </div>
           </div>
@@ -109,13 +133,37 @@
             <p class="text-sm">{{item.sender?.name}}</p>
             </div>
               <div class="bg-[#23272f] text-white p-3 rounded-lg max-w-xs md:max-w-md shadow">
-                <p class="text-sm">{{ item.message }}</p>
-                <img
-                  *ngIf="item.image"
-                  [src]="item.image"
-                  class="mt-2 rounded max-h-48"
-                  alt="Attached"
-                />
+                <p class="text-sm" *ngIf="item.message">{{ item.message }}</p>
+                
+                <!-- Attachments -->
+                <div *ngIf="item.attachments && item.attachments.length > 0" class="mt-2 space-y-2">
+                  <div *ngFor="let attachment of item.attachments" class="attachment-item">
+                    <!-- Image attachment -->
+                    <div *ngIf="attachment.mime.startsWith('image/')" class="image-attachment">
+                      <img
+                        [src]="attachment.url"
+                        class="rounded max-h-48 max-w-full object-cover"
+                        [alt]="attachment.name"
+                      />
+                      <div class="text-xs text-gray-300 mt-1">{{ attachment.name }}</div>
+                    </div>
+                    
+                    <!-- File attachment -->
+                    <div *ngIf="!attachment.mime.startsWith('image/')" class="file-attachment bg-[#2a2a2a] rounded p-2">
+                      <div class="flex items-center space-x-2">
+                        <mat-icon class="text-gray-400">{{ messageAttachmentHelper.getFileIcon(attachment.mime) }}</mat-icon>
+                        <div class="flex-1 min-w-0">
+                          <div class="text-sm font-medium truncate">{{ attachment.name }}</div>
+                          <div class="text-xs text-gray-400">{{ messageAttachmentHelper.formatFileSize(attachment.size) }}</div>
+                        </div>
+                        <a [href]="attachment.url" target="_blank" class="text-blue-400 hover:text-blue-300">
+                          <mat-icon class="text-sm">download</mat-icon>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
                 <span class="block text-xs text-right text-gray-400 mt-1">{{ item?.created_at | date:'HH:mm' }}</span>
               </div>
             </div>

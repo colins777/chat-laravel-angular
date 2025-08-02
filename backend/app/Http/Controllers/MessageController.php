@@ -10,7 +10,7 @@ use App\Models\Message;
 use App\Models\MessageAttachment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Psy\Util\Str;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 
 class MessageController extends Controller
@@ -46,7 +46,8 @@ class MessageController extends Controller
     public function store(StoreMessageRequest $request)
     {
         $data = $request->validated();
-        $data['sender_id'] = auth()->id();
+        $currentUserId = auth()->id();
+        $data['sender_id'] = $currentUserId;
         $receiverId =  $data['receiver_id'] ?? null;
 
         $files = $data['attachments'] ?? [];
@@ -55,12 +56,13 @@ class MessageController extends Controller
 
         $attachments = [];
         if ($files) {
-            foreach ($files as $file) {
-                $directory = 'attachments/' . Str::random(32);
-                Storage::makeDirectory($directory);
+            $directory = 'attachments/' . $currentUserId;
+            //Storage::makeDirectory($directory);
+            Storage::makeDirectory($directory);
 
+            foreach ($files as $file) {
                 $model = [
-                 'message_id' => $message->id,
+                    'message_id' => $message->id,
                     'name' => $file->getClientOriginalName(),
                     'mime' => $file->getClientMimeType(),
                     'size' => $file->getSize(),
@@ -80,7 +82,7 @@ class MessageController extends Controller
             Log::info('Error: socketMessage::dispatch', ['message' => $e]);
         }
         
-        Conversation::updateConversationWithMessage($receiverId, auth()->id(), $message);
+        Conversation::updateConversationWithMessage($receiverId, $currentUserId, $message);
     
         return new MessageResource($message);
     }

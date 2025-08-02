@@ -1,5 +1,16 @@
 import { User } from "./User";
 
+export interface MessageAttachment {
+  id: number;
+  message_id: number;
+  name: string;
+  mime: string;
+  size: number;
+  url: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Message {
   id: number;
   conversation_id: number | null;
@@ -12,4 +23,5 @@ export interface Message {
   updated_at: string;
   image?: string;
   sender?: User;
+  attachments?: MessageAttachment[];
 }

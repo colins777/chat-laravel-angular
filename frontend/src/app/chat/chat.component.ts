@@ -18,6 +18,7 @@ import { getDateLabel } from '../helpers/message-date-label.helper';
 import { EchoService } from '../services/echo.service';
 import { HttpClient } from '@angular/common/http';
 import { User } from '../interfaces/User';
+import { MessageAttachmentHelperService } from '../services/message-attachment-helper.service';
 
 
 @Component({
@@ -79,6 +80,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       private route: ActivatedRoute,
       private echo: EchoService,
       private http: HttpClient,
+      public messageAttachmentHelper: MessageAttachmentHelperService
     ) {}
 
   //addEcho service for listening to events
@@ -105,6 +107,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
           }
           this.updateConversationsWithLastMessage(newMessage);
+           
           console.log('newMessage:', newMessage)
         });
     });
@@ -150,15 +153,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
               }
             });
         });
-
-
           console.log('conversations leaving', this.conversations)
       })
       .error((e:any) => {
         console.warn('WS error', e)
       });
   }
-
   ngOnInit(): void {
     this.svc.getUser()
       .subscribe({
@@ -179,6 +179,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       const echo = this.echo.getInstance();
       console.log('ngOnDestroy', echo)
       echo.disconnect();
+
+      console.log('ngOnDestroy', echo)
   }
 
     ngAfterViewChecked(): void {
@@ -226,6 +228,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
         this.loadingConversations = false;
 
         this.listenToEchoEvents();
+
+        console.log('loadConversations', this.conversations)
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';
@@ -271,6 +275,8 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       this.hasMoreMessages = !!response.meta.next_page_url;
       this.loading = false;
 
+      console.log('response messages:', response)
+      console.log('loadMessages:', this.messages)
     },
     error: (error: any) => {
       console.warn('error', error.message)
@@ -285,8 +291,6 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       this.loadMessagesByUser(this.receiverId, this.currentPage + 1);
     }
   }
-
-
   filterConversations(term: string): void {
     this.searchTerm = term;
     if (!term) {
@@ -321,5 +325,4 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       }
     });
   }
-
 }
