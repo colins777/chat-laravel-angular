@@ -20,7 +20,6 @@ import { HttpClient } from '@angular/common/http';
 import { User } from '../interfaces/User';
 import { MessageAttachmentHelperService } from '../services/message-attachment-helper.service';
 
-
 @Component({
   selector: 'app-chat',
   standalone: true,
@@ -41,9 +40,7 @@ import { MessageAttachmentHelperService } from '../services/message-attachment-h
   styleUrls: ['./chat.component.css']
 })
 
-
-
-export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
   
   errMessage!: string | null;
@@ -103,7 +100,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
 
             console.log('messages:', this.messages)
             this.groupedMessages = this.groupMessagesByDate(this.messages);
-            this.scrollToBottom();
+            //check if selected conversation is the same as the new message
+            if (this.selectedConversation && this.selectedConversation.id === newMessage.sender_id) {
+              this.scrollToBottom();
+            }
 
           }
           this.updateConversationsWithLastMessage(newMessage);
@@ -183,16 +183,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
       console.log('ngOnDestroy', echo)
   }
 
-    ngAfterViewChecked(): void {
-    if (this.shouldScrollToBottom) {
-      this.scrollToBottom();
-      this.shouldScrollToBottom = false;
-    }
-  }
-
   scrollToBottom(): void {
     try {
       const element = this.messagesContainer.nativeElement;
+
+      console.log('scrollToBottom height', element.scrollHeight)
+
       element.scrollTo({
         top: element.scrollHeight,
         behavior: 'smooth'
@@ -245,7 +241,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
     this.receiverId = conversation.id;
     this.selectedConversation =  conversation;
     console.log('selectedConversation', this.selectedConversation);
-    this.loadMessagesByUser(this.receiverId, this.currentPage);
+    this.loadMessagesByUser(this.receiverId, this.currentPage)
+    
+    //this.scrollToBottom();
     this.shouldScrollToBottom = true;
 
     //set all unread messages to read
@@ -264,7 +262,6 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       if (page === 1) {
         this.messages = response.data.reverse();
         this.showMessages = true;
-        this.shouldScrollToBottom = true;
       } else {
         this.messages = [...response.data.reverse(), ...this.messages];
         this.showMessages = true;
@@ -274,6 +271,13 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       this.groupedMessages = this.groupMessagesByDate(this.messages);
       this.hasMoreMessages = !!response.meta.next_page_url;
       this.loading = false;
+
+      //scroll to bottom
+      console.log('shouldScrollToBottom', this.shouldScrollToBottom)
+      if (this.shouldScrollToBottom) {
+          this.scrollToBottom();
+          this.shouldScrollToBottom = false;
+      }
 
       console.log('response messages:', response)
       console.log('loadMessages:', this.messages)
