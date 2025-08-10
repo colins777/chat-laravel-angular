@@ -24,4 +24,5 @@ export interface Message {
   image?: string;
   sender?: User;
   attachments?: MessageAttachment[];
+  deleted?: boolean;
 }

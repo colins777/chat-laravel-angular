@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
   MESSAGES: {
     GET_MESSAGES_BY_USER: `${BASE_URL}/api/messages`,
     STORE_MESSAGE: `${BASE_URL}/api/message-store`,
-    MARK_AS_READ: `${BASE_URL}/api/messages/mark-as-read`
+    MARK_AS_READ: `${BASE_URL}/api/messages/mark-as-read`,
+    DELETE_MESSAGE: `${BASE_URL}/api/messages`
   }
 } as const;

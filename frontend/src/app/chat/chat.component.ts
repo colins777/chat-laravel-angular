@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ElementRef, AfterViewChecked, HostListener } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -71,7 +71,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   onlineUsers: User[] = [];
 
-    constructor(
+  // Track which message menus are open
+  openMessageMenus: Set<number> = new Set();
+
+  constructor(
       private svc: HttpTokenService,
       private router: Router,
       private route: ActivatedRoute,
@@ -94,21 +97,29 @@ export class ChatComponent implements OnInit, OnDestroy {
         .listen('SocketMessage', (data: any) => {
           const newMessage: Message = data.message;
 
-          // Show message if it belongs to the current selected conversation
+          // Show new message if it belongs to the current selected conversation
           if (this.selectedConversation && this.selectedConversation.id === newMessage.sender_id) {
-            this.messages.push(newMessage);
+            if (!newMessage.deleted) {
 
-            console.log('messages:', this.messages)
-            this.groupedMessages = this.groupMessagesByDate(this.messages);
-            //check if selected conversation is the same as the new message
-            if (this.selectedConversation && this.selectedConversation.id === newMessage.sender_id) {
+              console.log('newMessage:', newMessage);
+              console.log('messages:', this.messages);
+
+              this.messages.push(newMessage);
+              this.groupedMessages = this.groupMessagesByDate(this.messages);
+            
               this.scrollToBottom();
-            }
+              this.shouldScrollToBottom = false;
+              this.updateConversationsWithLastMessage(newMessage);
+          
+              //clear deleted message for second user and update conversation
+            } else {
+                console.log('Message deleted:', newMessage);
 
+                this.messages = this.messages.filter(message => message.id !== newMessage.id);
+                this.groupedMessages = this.groupMessagesByDate(this.messages);
+                this.openMessageMenus.delete(newMessage.id);
+            }
           }
-          this.updateConversationsWithLastMessage(newMessage);
-           
-          console.log('newMessage:', newMessage)
         });
     });
 
@@ -329,4 +340,52 @@ loadMessagesByUser(userId: number, page: number = 1): void {
       }
     });
   }
+
+  // Method to toggle menu for a specific message
+  toggleMessageMenu(messageId: number): void {
+    if (this.openMessageMenus.has(messageId)) {
+      this.openMessageMenus.delete(messageId);
+      console.log('openMessageMenus', this.openMessageMenus)
+    } else {
+      this.openMessageMenus.add(messageId);
+      console.log('openMessageMenus', this.openMessageMenus)
+    }
+  }
+
+  // Method to check if a specific message menu is open
+  isMessageMenuOpen(messageId: number): boolean {
+    return this.openMessageMenus.has(messageId);
+  }
+
+  // Method to close all message menus
+  closeAllMessageMenus(): void {
+    this.openMessageMenus.clear();
+  }
+
+  // Close menus when clicking outside
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    // Check if the click is outside the additional dots menu
+    if (!target.closest('.additional-dots-menu') && !target.closest('.additional-dots-dropdown')) {
+      this.closeAllMessageMenus();
+    }
+  }
+
+  deleteMessage(messageId:  number): void {
+   
+    this.svc.deleteMessage(messageId).subscribe({
+      next: (response: any) => {
+        console.log('deleteMessage', response)
+
+       this.messages = this.messages.filter(message => message.id !== messageId);
+       this.groupedMessages = this.groupMessagesByDate(this.messages);
+       this.openMessageMenus.delete(messageId);
+      },
+      error: (error: any) => {
+        console.error('Error marking as read:', error);
+      }
+    })
+  }
 }
+

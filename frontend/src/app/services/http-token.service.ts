@@ -19,7 +19,6 @@ export class HttpTokenService {
     );
   }
 
-
   login(email: string, password: string) {
     return this.http.post<any>(`${baseUrl}/login`, {email, password},
       {withCredentials: true})
@@ -52,6 +51,11 @@ export class HttpTokenService {
       { senderId },
       { withCredentials: true }
     );
+  }
+
+  deleteMessage(messageId: number): Observable<any> {
+    return this.http.delete<any>(`${API_ENDPOINTS.MESSAGES.DELETE_MESSAGE}/${messageId}}`,
+      { withCredentials: true });
   }
 
 }

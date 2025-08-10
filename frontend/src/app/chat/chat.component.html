@@ -70,7 +70,7 @@
           *ngIf="item.sender_id === user.id; else receiverBlock"
           class="flex justify-end items-end mx-3"
         >
-        <!-- test -->
+      
           <div class="flex flex-col items-end space-y-2 space-x-reverse my-2">
             <div class="flex flex-row items-center">
               <p class="text-sm">{{item.sender?.name}}</p>
@@ -82,7 +82,36 @@
             />
             </div>
             
-            <div class="bg-[#b30000] text-white p-3 rounded-lg max-w-xs md:max-w-md shadow-lg">
+            
+            <div class="bg-[#b30000] text-white pt-3 pb-3 pl-3 pr-6 rounded-lg max-w-xs md:max-w-md shadow-lg relative">
+
+            <!-- Additional dots menu -->
+              <div class="additional-dots-menu absolute top-[calc(50%-10px)] right-0 cursor-pointer"
+              (click)="toggleMessageMenu(item.id); $event.stopPropagation()"
+              >
+                <mat-icon class="text-black ">more_vert</mat-icon>
+
+                <div *ngIf="isMessageMenuOpen(item.id)" 
+                  class="additional-dots-dropdown absolute top-[80%] right-0 bg-gray-800 rounded-lg p-2 shadow-lg min-w-48 z-50">
+                  <div class="additional-dots-menu-item" (click)="$event.stopPropagation()">
+                    <div class="grid grid-cols-[20px_1fr] gap-2 items-center p-2"
+                      (click)="deleteMessage(item.id); $event.stopPropagation()"
+                    >
+                      <mat-icon class="text-white">delete</mat-icon>
+                      <span class="text-white text-sm">Delete</span>
+                    </div>
+
+                    <div class="grid grid-cols-[20px_1fr] gap-2 items-center p-2">
+                      <mat-icon class="text-white">edit</mat-icon>
+                      <span class="text-white text-sm">Edit</span>
+                    </div>
+
+                  </div>
+                </div>
+                
+
+              
+              </div>
               <p class="text-sm" *ngIf="item.message">{{ item.message }}</p>
               
               <!-- Attachments -->

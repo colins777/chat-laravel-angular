@@ -17,6 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/messages/{user}', [MessageController::class, 'getMessagesByUser']);
     Route::post('/message-store', [MessageController::class, 'store']);
     Route::post('/messages/mark-as-read', [MessageController::class, 'markAsRead']);
+    Route::delete('/messages/{messageId}', [MessageController::class, 'destroy']);
     
     Broadcast::routes();
 });

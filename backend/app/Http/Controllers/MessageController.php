@@ -67,7 +67,6 @@ class MessageController extends Controller
                     'mime' => $file->getClientMimeType(),
                     'size' => $file->getSize(),
                     'path' => $file->store($directory, 'public'),
-
                 ];
                 $attachment = MessageAttachment::create($model);
                 $attachments[] = $attachment;
@@ -87,15 +86,40 @@ class MessageController extends Controller
         return new MessageResource($message);
     }
 
-    public function destroy(Message $message)
+    public function destroy($messageId)
     {
-        if ($message->sender_id !== auth()->id()) {
-            return response()->json(['message' => 'Forbidden'], 403);
+        $message = Message::findOrFail($messageId);
+        $deletedMessage = $message;
+        // if ($message->sender_id !== auth()->id()) {
+        //     return response()->json(['message' => 'Forbidden'], 403);
+        // }
+       // Log::info(['message' => $message]);
+        try {
+            // Delete any stored files for attachments first (if applicable)
+            if ($message->attachments) {
+                foreach ($message->attachments as $attachment) {
+                    if ($attachment->path) {
+                        Storage::disk('public')->delete($attachment->path);
+                    }
+                }
+                // Delete attachment records if they are related via hasMany
+                $message->attachments()->delete();
+            }
+           
+            $message->delete();
+            $deletedMessage->deleted = true;
+    
+            // Notify clients that a message was removed
+            SocketMessage::dispatch($deletedMessage);
+            return response('', 204);
+
+        } catch (\Throwable $e) {
+            Log::error('Error hard delete message', [
+                'message_id' => $messageId,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['message' => 'Unable to delete message'], 500);
         }
-
-        $message->delete();
-
-        return response('', 204);
     }
 
     public function markAsRead(Request $request)
