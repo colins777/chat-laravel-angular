@@ -1,0 +1,31 @@
+ <div class="additional-dots-menu absolute top-[calc(50%-10px)] right-0 cursor-pointer"
+    (click)="toggleMessageMenu(messageId); $event.stopPropagation()"
+    >
+    <mat-icon class="text-black ">more_vert</mat-icon>
+
+    <div *ngIf="isOpen(messageId)" 
+        class="additional-dots-dropdown absolute top-[80%] right-0 bg-gray-800 rounded-lg p-2 shadow-lg min-w-48 z-50">
+        <div class="additional-dots-menu-item" (click)="$event.stopPropagation()">
+        <div class="grid grid-cols-[20px_1fr] gap-2 items-center p-2 hover:bg-[#1e1e1e] cursor-pointer transition-colors duration-200"
+            
+         (click)="deleteMessageHandler(messageId)"
+        >
+           
+        <mat-icon class="text-white">delete</mat-icon>
+           
+        <app-button-loader
+          [text]="'Delete'"
+          [class]="'w-full flex justify-left items-center'"
+          [isLoading]="isDeletingMessage"
+          [disabled]="isDeletingMessage"
+          type="submit"
+      ></app-button-loader>
+        </div>
+
+        <div class="grid grid-cols-[20px_1fr] gap-2 items-center p-2 hover:bg-[#1e1e1e] cursor-pointer transition-colors duration-200">
+            <mat-icon class="text-white">edit</mat-icon>
+            <span class="text-white text-sm">Edit</span>
+        </div>
+        </div>
+    </div>
+</div>

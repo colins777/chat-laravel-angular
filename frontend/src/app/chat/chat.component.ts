@@ -19,6 +19,7 @@ import { EchoService } from '../services/echo.service';
 import { HttpClient } from '@angular/common/http';
 import { User } from '../interfaces/User';
 import { MessageAttachmentHelperService } from '../services/message-attachment-helper.service';
+import { DotsMenuComponent } from '../components/UI/dots-menu/dots-menu.component';
 
 @Component({
   selector: 'app-chat',
@@ -34,7 +35,8 @@ import { MessageAttachmentHelperService } from '../services/message-attachment-h
     RouterModule,
     MessageFormComponent,
     LeftSidebarComponent,
-    LoaderWrapperComponent
+    LoaderWrapperComponent,
+    DotsMenuComponent
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css']
@@ -73,6 +75,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   // Track which message menus are open
   openMessageMenus: Set<number> = new Set();
+  isDeletingMessage: boolean = false;
 
   constructor(
       private svc: HttpTokenService,
@@ -97,9 +100,9 @@ export class ChatComponent implements OnInit, OnDestroy {
         .listen('SocketMessage', (data: any) => {
           const newMessage: Message = data.message;
 
-          // Show new message if it belongs to the current selected conversation
-          if (this.selectedConversation && this.selectedConversation.id === newMessage.sender_id) {
-            if (!newMessage.deleted) {
+          // Show new message in tje messages list if it belongs to the current selected conversation
+          if (this.selectedConversation && this.selectedConversation.id === newMessage.sender_id && !newMessage.deleted) {
+           // if (!newMessage.deleted) {
 
               console.log('newMessage:', newMessage);
               console.log('messages:', this.messages);
@@ -109,17 +112,21 @@ export class ChatComponent implements OnInit, OnDestroy {
             
               this.scrollToBottom();
               this.shouldScrollToBottom = false;
-              this.updateConversationsWithLastMessage(newMessage);
-          
-              //clear deleted message for second user and update conversation
-            } else {
+
+          } 
+
+          if (newMessage.deleted) {
+              //this.updateConversationsWithLastMessage(newMessage);
                 console.log('Message deleted:', newMessage);
 
-                this.messages = this.messages.filter(message => message.id !== newMessage.id);
-                this.groupedMessages = this.groupMessagesByDate(this.messages);
-                this.openMessageMenus.delete(newMessage.id);
-            }
+              this.messages = this.messages.filter(message => message.id !== newMessage.id);
+              this.groupedMessages = this.groupMessagesByDate(this.messages);
+          } else {
+            // Update conversation with new message
+           this.updateConversationsWithLastMessage(newMessage);
           }
+
+          
         });
     });
 
@@ -341,38 +348,23 @@ loadMessagesByUser(userId: number, page: number = 1): void {
     });
   }
 
-  // Method to toggle menu for a specific message
-  toggleMessageMenu(messageId: number): void {
-    if (this.openMessageMenus.has(messageId)) {
-      this.openMessageMenus.delete(messageId);
-      console.log('openMessageMenus', this.openMessageMenus)
+   onMenuToggled(data: {messageId: number, isOpen: boolean}): void {
+    if (data.isOpen) {
+      this.openMessageMenus.add(data.messageId);
     } else {
-      this.openMessageMenus.add(messageId);
-      console.log('openMessageMenus', this.openMessageMenus)
+      this.openMessageMenus.delete(data.messageId);
     }
+    console.log('openMessageMenus', this.openMessageMenus);
   }
 
-  // Method to check if a specific message menu is open
-  isMessageMenuOpen(messageId: number): boolean {
-    return this.openMessageMenus.has(messageId);
-  }
-
-  // Method to close all message menus
-  closeAllMessageMenus(): void {
+  onAllMenusClosed(): void {
     this.openMessageMenus.clear();
   }
 
-  // Close menus when clicking outside
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    const target = event.target as HTMLElement;
-    // Check if the click is outside the additional dots menu
-    if (!target.closest('.additional-dots-menu') && !target.closest('.additional-dots-dropdown')) {
-      this.closeAllMessageMenus();
-    }
-  }
+  //TODO fix bug with last message not being deleted
+  onDeleteMessage(messageId:  number): void {
 
-  deleteMessage(messageId:  number): void {
+    this.isDeletingMessage = true;
    
     this.svc.deleteMessage(messageId).subscribe({
       next: (response: any) => {
@@ -381,6 +373,8 @@ loadMessagesByUser(userId: number, page: number = 1): void {
        this.messages = this.messages.filter(message => message.id !== messageId);
        this.groupedMessages = this.groupMessagesByDate(this.messages);
        this.openMessageMenus.delete(messageId);
+
+       this.isDeletingMessage = false;
       },
       error: (error: any) => {
         console.error('Error marking as read:', error);
