@@ -37,14 +37,25 @@
         </div>
         <!--End conversation-component -->
 
-      <div *ngIf="selectedConversation" class="flex space-x-2">
-        <button class="p-2 rounded bg-[#b30000]">
-          📞
-        </button>
-        <button class="p-2 rounded bg-[#b30000]">
-          🎥
-        </button>
-      </div>
+        <div *ngIf="selectedConversation" class="flex space-x-2">
+            <app-button-icon-loader
+              [isLoading]="isCalling"
+            
+              (click)="initiateCall('audio')"
+              class="flex items-center justify-center rounded hover:bg-red-600 bg-[#b30000] text-white w-[60px] h-[60px] hover:bg-red-600 transition-colors"
+            >
+            <mat-icon slot="icon" >phone</mat-icon>
+
+          </app-button-icon-loader>
+
+          <app-button-icon-loader
+            [isLoading]="isCalling"
+            (click)="initiateCall('video')"
+            class="flex items-center justify-center rounded  bg-[#b30000] text-white w-[60px] h-[60px] hover:bg-red-600 transition-colors">
+
+            <mat-icon slot="icon">videocam</mat-icon>
+            </app-button-icon-loader>
+        </div>
     </div>
     <!--End Chat Header -->
 
@@ -192,4 +203,15 @@
     ></app-message-form>
 
   </main>
+
+  <!-- Call Modal -->
+  <app-call-modal
+    [isVisible]="showCallModal"
+    [callData]="currentCall || incomingCall"
+    [isIncoming]="isIncomingCall"
+    (closeModal)="closeCallModal()"
+    (answerCall)="answerCall($event)"
+    (declineCall)="declineCall($event)"
+    (endCall)="endCall($event)">
+  </app-call-modal>
 </div>

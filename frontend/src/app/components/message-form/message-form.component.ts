@@ -5,7 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { ButtonIconSendMessageComponent} from '../UI/button-icon-send-message';
+import { ButtonIconLoaderComponent} from '../UI/button-icon-loader.component';
 import { HttpTokenService } from '../../services/http-token.service';
 import { MessageAttachmentHelperService } from '../../services/message-attachment-helper.service';
 
@@ -26,7 +26,7 @@ interface FilePreview {
     MatInputModule,
     MatIconModule,
     MatButtonModule,
-    ButtonIconSendMessageComponent,
+    ButtonIconLoaderComponent,
   ],
   templateUrl: './message-form.component.html',
   styleUrl: './message-form.component.css'
