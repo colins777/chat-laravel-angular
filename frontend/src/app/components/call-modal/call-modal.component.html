@@ -1,0 +1,126 @@
+<div *ngIf="isVisible" 
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+     (click)="onCloseModal()">
+  
+  <!-- Call Modal -->
+  <div class="bg-[#1e1e1e] rounded-lg shadow-2xl border border-gray-700 min-w-[400px] max-w-[600px] call-modal modal-draggable"
+       (click)="$event.stopPropagation()"
+       (mousedown)="onMouseDown($event)"
+       (mousemove)="onMouseMove($event)"
+       (mouseup)="onMouseUp()"
+       style="cursor: move;">
+    
+    <!-- Header - Draggable area -->
+    <div class="bg-[#b30000] text-white p-4 rounded-t-lg cursor-move draggable-header">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="w-3 h-3 bg-white rounded-full"></div>
+          <h3 class="font-semibold">
+            {{ callData?.type === 'video' ? 'Video Call' : 'Audio Call' }}
+            <!-- <span *ngIf="callData?.caller" class="text-sm font-normal">
+              with {{ callData.caller.name }}
+            </span> -->
+          </h3>
+        </div>
+        <button (click)="onCloseModal()" 
+                class="text-white hover:text-gray-200 transition-colors close-button">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <!-- Call Content -->
+    <div class="p-6">
+      
+      <!-- Incoming Call -->
+      <div *ngIf="isIncoming" class="text-center space-y-6">
+        <div class="w-24 h-24 mx-auto bg-[#b30000] rounded-full flex items-center justify-center">
+          <span class="text-4xl">
+            {{ callData?.type === 'video' ? '🎥' : '📞' }}
+          </span>
+        </div>
+        
+        <div>
+          <h4 class="text-xl font-semibold text-white mb-2">Incoming Call</h4>
+          <p class="text-gray-400">{{ callData?.caller?.name }} is calling you</p>
+          <p class="text-sm text-gray-500">{{ callData?.type === 'video' ? 'Video' : 'Audio' }} call</p>
+        </div>
+
+        <!-- Call Controls -->
+        <div class="flex justify-center space-x-4 call-controls">
+          <button (click)="onAnswerCall()"
+                  class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full transition-colors">
+            📞
+          </button>
+          <button (click)="onDeclineCall()"
+                  class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full transition-colors">
+            ❌
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Call -->
+      <div *ngIf="!isIncoming" class="space-y-4">
+        
+        <!-- Call Status -->
+        <div class="text-center" [class.connecting]="callStatus === 'connecting'">
+          <div class="text-sm text-gray-400 mb-2">
+            <span [class]="'status-' + callStatus">
+              {{ callStatus === 'connecting' ? 'Connecting...' : 
+                 callStatus === 'failed' ? 'Call Failed' : 'Call Ended' }}
+            </span>
+          </div>
+          <div *ngIf="callStatus === 'connected'" class="text-lg font-semibold text-white call-duration">
+            {{ formatDuration(callDuration) }}
+          </div>
+        </div>
+
+        <!-- Video Container -->
+        <div *ngIf="callData?.type === 'video'" class="relative video-container">
+          <!-- Remote Video (Main) -->
+          <video #remoteVideo 
+                 class="w-full h-64 bg-gray-800 rounded-lg object-cover"
+                 autoplay 
+                 playsinline
+                 muted>
+          </video>
+          
+          <!-- Local Video (Picture-in-Picture) -->
+          <video #localVideo 
+                 class="absolute bottom-4 right-4 w-24 h-24 bg-gray-700 rounded-lg object-cover border-2 border-white local-video"
+                 autoplay 
+                 playsinline
+                 muted>
+          </video>
+        </div>
+
+        <!-- Audio Only Indicator -->
+        <div *ngIf="callData?.type === 'audio'" class="text-center py-8">
+          <div class="w-32 h-32 mx-auto bg-[#b30000] rounded-full flex items-center justify-center audio-indicator">
+            <span class="text-6xl">📞</span>
+          </div>
+          <p class="text-gray-400 mt-4">Audio Call in Progress</p>
+        </div>
+
+        <!-- Call Controls -->
+        <div class="flex justify-center space-x-4 pt-4 call-controls">
+          <button (click)="onEndCall()"
+                  class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full transition-colors">
+            📞
+          </button>
+        </div>
+      </div>
+
+      <!-- Call Failed/Ended -->
+      <div *ngIf="callStatus === 'failed' || callStatus === 'ended'" class="text-center py-4">
+        <p class="text-red-400 mb-4">
+          {{ callStatus === 'failed' ? 'Call failed to connect' : 'Call ended' }}
+        </p>
+        <button (click)="onCloseModal()" 
+                class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

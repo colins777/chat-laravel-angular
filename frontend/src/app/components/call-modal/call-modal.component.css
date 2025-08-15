@@ -1,0 +1,167 @@
+/* Call Modal Styles */
+.call-modal {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Draggable modal */
+.modal-draggable {
+  user-select: none;
+  transition: transform 0.1s ease-out;
+}
+
+.modal-draggable:active {
+  transition: none;
+}
+
+/* Video elements */
+video {
+  background-color: #1f2937;
+}
+
+video::-webkit-media-controls {
+  display: none;
+}
+
+video::-webkit-media-controls-panel {
+  display: none;
+}
+
+/* Call controls */
+.call-controls button {
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.call-controls button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.call-controls button:active {
+  transform: scale(0.95);
+}
+
+/* Answer button (green) */
+.call-controls button:first-child {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .call-modal {
+    min-width: 90vw;
+    margin: 1rem;
+  }
+  
+  .call-controls {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .call-controls button {
+    margin: 0.5rem 0;
+  }
+}
+
+/* Loading animation for connecting state */
+.connecting {
+  position: relative;
+}
+
+.connecting::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #b30000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Call duration counter */
+.call-duration {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #10b981;
+}
+
+/* Status indicators */
+.status-connecting {
+  color: #f59e0b;
+}
+
+.status-connected {
+  color: #10b981;
+}
+
+.status-failed {
+  color: #ef4444;
+}
+
+.status-ended {
+  color: #6b7280;
+}
+
+/* Hover effects for draggable header */
+.draggable-header:hover {
+  background-color: #991a00;
+}
+
+/* Close button hover effect */
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  padding: 0.25rem;
+}
+
+/* Video container hover effects */
+.video-container:hover .local-video {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Audio call indicator animation */
+.audio-indicator {
+  animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
