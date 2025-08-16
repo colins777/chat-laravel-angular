@@ -1,6 +1,6 @@
-<div *ngIf="isVisible" 
+<div *ngIf="isVisibleCallModal"
      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-     (click)="onCloseModal()">
+     (click)="onEndCall()">
   
   <!-- Call Modal -->
   <div class="bg-[#1e1e1e] rounded-lg shadow-2xl border border-gray-700 min-w-[400px] max-w-[600px] call-modal modal-draggable"
@@ -22,7 +22,7 @@
             </span> -->
           </h3>
         </div>
-        <button (click)="onCloseModal()" 
+        <button (click)="onEndCall()" 
                 class="text-white hover:text-gray-200 transition-colors close-button">
           ✕
         </button>
@@ -33,7 +33,7 @@
     <div class="p-6">
       
       <!-- Incoming Call -->
-      <div *ngIf="isIncoming" class="text-center space-y-6">
+      <div *ngIf="isIncomingCall" class="text-center space-y-6">
         <div class="w-24 h-24 mx-auto bg-[#b30000] rounded-full flex items-center justify-center">
           <span class="text-4xl">
             {{ callData?.type === 'video' ? '🎥' : '📞' }}
@@ -60,7 +60,7 @@
       </div>
 
       <!-- Active Call -->
-      <div *ngIf="!isIncoming" class="space-y-4">
+      <div *ngIf="!isIncomingCall" class="space-y-4">
         
         <!-- Call Status -->
         <div class="text-center" [class.connecting]="callStatus === 'connecting'">
@@ -116,7 +116,7 @@
         <p class="text-red-400 mb-4">
           {{ callStatus === 'failed' ? 'Call failed to connect' : 'Call ended' }}
         </p>
-        <button (click)="onCloseModal()" 
+        <button (click)="onEndCall()" 
                 class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded transition-colors">
           Close
         </button>

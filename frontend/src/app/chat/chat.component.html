@@ -39,7 +39,7 @@
 
         <div *ngIf="selectedConversation" class="flex space-x-2">
             <app-button-icon-loader
-              [isLoading]="isCalling"
+              [isLoading]="isCallingParent"
             
               (click)="initiateCall('audio')"
               class="flex items-center justify-center rounded hover:bg-red-600 bg-[#b30000] text-white w-[60px] h-[60px] hover:bg-red-600 transition-colors"
@@ -49,12 +49,12 @@
           </app-button-icon-loader>
 
           <app-button-icon-loader
-            [isLoading]="isCalling"
+            [isLoading]="isCallingParent"
             (click)="initiateCall('video')"
             class="flex items-center justify-center rounded  bg-[#b30000] text-white w-[60px] h-[60px] hover:bg-red-600 transition-colors">
 
             <mat-icon slot="icon">videocam</mat-icon>
-            </app-button-icon-loader>
+          </app-button-icon-loader>
         </div>
     </div>
     <!--End Chat Header -->
@@ -206,12 +206,11 @@
 
   <!-- Call Modal -->
   <app-call-modal
-    [isVisible]="showCallModal"
-    [callData]="currentCall || incomingCall"
-    [isIncoming]="isIncomingCall"
-    (closeModal)="closeCallModal()"
-    (answerCall)="answerCall($event)"
-    (declineCall)="declineCall($event)"
-    (endCall)="endCall($event)">
+    #callModal
+    [isVisibleCallModal]="isVisibleCallModal"
+    [currentUser]="user"
+    [selectedConversation]="selectedConversation"
+    (isCalling)="onIsCalling($event)"
+   >
   </app-call-modal>
 </div>

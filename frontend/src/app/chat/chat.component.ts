@@ -16,12 +16,10 @@ import { LeftSidebarComponent } from './left-sidebar/left-sidebar.component';
 import { LoaderWrapperComponent } from '../components/UI/loader-wrapper/loader-wrapper.component';
 import { getDateLabel } from '../helpers/message-date-label.helper';
 import { EchoService } from '../services/echo.service';
-import { HttpClient } from '@angular/common/http';
 import { User } from '../interfaces/User';
 import { MessageAttachmentHelperService } from '../services/message-attachment-helper.service';
 import { DotsMenuComponent } from '../components/UI/dots-menu/dots-menu.component';
 import { CallModalComponent } from '../components/call-modal/call-modal.component';
-import { CallService, CallData } from '../services/call.service';
 import  { ButtonIconLoaderComponent } from '../components/UI/button-icon-loader.component';
 
 @Component({
@@ -49,6 +47,7 @@ import  { ButtonIconLoaderComponent } from '../components/UI/button-icon-loader.
 
 export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
+  @ViewChild(CallModalComponent) callModal!: CallModalComponent;
   
   errMessage!: string | null;
   user!: any | null;
@@ -83,20 +82,14 @@ export class ChatComponent implements OnInit, OnDestroy {
   isDeletingMessage: boolean = false;
 
   // Call-related properties
-  showCallModal = false;
-  currentCall: CallData | null = null;
-  incomingCall: CallData | null = null;
-  isIncomingCall = false;
-  isCalling = false;
+   isVisibleCallModal = false;
+   isCallingParent = false;
 
   constructor(
       private svc: HttpTokenService,
       private router: Router,
-      private route: ActivatedRoute,
       private echo: EchoService,
-      private http: HttpClient,
       public messageAttachmentHelper: MessageAttachmentHelperService,
-      private callService: CallService
     ) {}
 
   //addEcho service for listening to events
@@ -144,7 +137,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     });
 
     // Listen for call events
-    this.listenToCallEvents();
+    //this.listenToCallEvents();
 
     console.log('listen!')
 
@@ -258,6 +251,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.loadingConversations = false;
 
         this.listenToEchoEvents();
+        this.callModal.listenToCallEvents(this.conversations);
 
         console.log('loadConversations', this.conversations)
       },
@@ -398,123 +392,21 @@ loadMessagesByUser(userId: number, page: number = 1): void {
     })
   }
 
-  // Listen for call events via WebSocket
-  listenToCallEvents(): void {
-    const echo = this.echo.getInstance();
-
-    // Listen for call events on existing message channels
-    this.conversations.forEach((conversation) => {
-      const otherUserId = conversation.id;
-      const sortedIds = [this.user.id, otherUserId].sort().join('-');
-      const channelName = `message.user.${sortedIds}`;
-
-      echo.private(channelName)
-        .listen('CallInitiated', (data: any) => {
-          console.log('Incoming call:', data);
-          this.incomingCall = data;
-          this.isIncomingCall = true;
-          this.showCallModal = true;
-        })
-        .listen('CallAnswered', (data: any) => {
-          console.log('Call answered:', data);
-          this.currentCall = data;
-          this.isIncomingCall = false;
-          this.showCallModal = true;
-        })
-        .listen('CallEnded', (data: any) => {
-          console.log('Call ended:', data);
-          this.handleCallEnded(data);
-        })
-        .listen('WebRTCSignal', (data: any) => {
-          console.log('WebRTC signal received:', data);
-          this.handleWebRTCSignal(data);
-        });
-    });
+  initiateCall(type: 'audio' | 'video'): void {
+    // Call the child component's method directly
+    if (this.callModal) {
+      this.isCallingParent = true;
+      this.callModal.initiateCall(type);
+    }
   }
 
-  // Handle WebRTC signals
-  handleWebRTCSignal(signal: any) {
-    // This will be implemented to handle WebRTC signaling
-    console.log('Handling WebRTC signal:', signal);
-  }
+  //emitter to parent component when call state changes
+  onIsCalling(isCalling:boolean): void { 
+    this.isCallingParent = isCalling;
 
-  // Handle call ended
-  handleCallEnded(call: CallData) {
-    this.currentCall = null;
-    this.incomingCall = null;
-    this.isIncomingCall = false;
-    this.showCallModal = false;
-    this.callService.clearCalls();
-  }
+    console.log('Parent isCalling:', this.isCallingParent);
 
-  // Call control methods
-  initiateCall(type: 'audio' | 'video') {
 
-    console.log('initiateCall');
-
-    if (!this.selectedConversation) return;
-
-    this.isCalling = true;
-
-    this.callService.initiateCall(this.selectedConversation.id, type).subscribe({
-      next: (response) => {
-        console.log('Call initiated:', response);
-        this.currentCall = response.call;
-        this.isIncomingCall = false;
-        this.showCallModal = true;
-        this.isCalling = false;
-      },
-      error: (error) => {
-        console.error('Failed to initiate call:', error);
-        this.isCalling = false;
-      }
-    });
-  }
-
-  answerCall(callId: number) {
-    this.callService.answerCall(callId).subscribe({
-      next: (response) => {
-        console.log('Call answered:', response);
-        this.currentCall = response.call;
-        this.incomingCall = null;
-        this.isIncomingCall = false;
-        this.showCallModal = true;
-      },
-      error: (error) => {
-        console.error('Failed to answer call:', error);
-      }
-    });
-  }
-
-  declineCall(callId: number) {
-    this.callService.declineCall(callId).subscribe({
-      next: (response) => {
-        console.log('Call declined:', response);
-        this.handleCallEnded(response.call);
-      },
-      error: (error) => {
-        console.error('Failed to decline call:', error);
-      }
-    });
-  }
-
-  endCall(callId: number) {
-    this.callService.endCall(callId).subscribe({
-      next: (response) => {
-        console.log('Call ended:', response);
-        this.handleCallEnded(response.call);
-      },
-      error: (error) => {
-        console.error('Failed to end call:', error);
-      }
-    });
-  }
-
-  closeCallModal() {
-    this.showCallModal = false;
-    this.currentCall = null;
-    this.incomingCall = null;
-    this.isIncomingCall = false;
   }
 
 }
