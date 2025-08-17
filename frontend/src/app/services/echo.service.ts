@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import { SETTINGS_WS } from '../constants/settings-ws';
-import axios from 'axios'; 
+import axios from 'axios';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -28,7 +29,7 @@ export class EchoService {
             const xsrfToken = this.getCookie('XSRF-TOKEN');
             
             axios.post(
-              'http://localhost:8000/api/broadcasting/auth',
+              environment.baseUrl + '/api/broadcasting/auth',
               {
                 socket_id: socketId,
                 channel_name: channel.name,

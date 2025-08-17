@@ -1,4 +1,6 @@
-const BASE_URL = 'http://localhost:8000';
+import { environment } from '../../environments/environment';
+
+const BASE_URL = environment.baseUrl;
 
 export const API_ENDPOINTS = {
   GET_CRSF_TOKEN: `${BASE_URL}/sanctum/csrf-cookie`,
