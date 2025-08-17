@@ -83,7 +83,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   // Call-related properties
    isVisibleCallModal = false;
-   isCallingParent = false;
+   isCalling = false;
 
   constructor(
       private svc: HttpTokenService,
@@ -395,18 +395,14 @@ loadMessagesByUser(userId: number, page: number = 1): void {
   initiateCall(type: 'audio' | 'video'): void {
     // Call the child component's method directly
     if (this.callModal) {
-      this.isCallingParent = true;
+      this.isCalling = true;
       this.callModal.initiateCall(type);
     }
   }
 
   //emitter to parent component when call state changes
   onIsCalling(isCalling:boolean): void { 
-    this.isCallingParent = isCalling;
-
-    console.log('Parent isCalling:', this.isCallingParent);
-
-
+    this.isCalling = isCalling;
   }
 
 }
