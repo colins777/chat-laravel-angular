@@ -2,9 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_ENDPOINTS } from '../constants/api-endpoints';
+import { environment } from '../../environments/environment'; 
 
 //@TODO add this import to use the API endpoints
-const baseUrl = 'http://localhost:8000';
+const baseUrl = environment.baseUrl || 'http://localhost:8000';
 
 @Injectable({
   providedIn: 'root'
