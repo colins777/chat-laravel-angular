@@ -42,16 +42,24 @@
         
         <div>
           <h4 class="text-xl font-semibold text-white mb-2">Incoming Call</h4>
-          <p class="text-gray-400">{{ callData?.caller?.name }} is calling you</p>
+          <p class="text-gray-400">{{ callData?.caller.name }} is calling you</p>
           <p class="text-sm text-gray-500">{{ callData?.type === 'video' ? 'Video' : 'Audio' }} call</p>
         </div>
 
         <!-- Call Controls -->
         <div class="flex justify-center space-x-4 call-controls">
-          <button (click)="onAnswerCall()"
+          <!-- <button (click)="onAnswerCall()"
                   class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full transition-colors">
             📞
-          </button>
+          </button> -->
+          <app-button-icon-loader
+            [isLoading]="isLoadingAnswer"
+            (click)="onAnswerCall()"
+            class="w-[60px] h-[60px] bg-green-500 hover:bg-green-600 text-white p-4 rounded-full transition-colors animate-pulse"
+          >  
+            <mat-icon slot="icon"  class="w-[60px] h-[60px]">phone</mat-icon>
+          </app-button-icon-loader>
+
           <button (click)="onDeclineCall()"
                   class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full transition-colors">
             ❌
@@ -61,7 +69,6 @@
 
       <!-- Active Call -->
       <div *ngIf="!isIncomingCall" class="space-y-4">
-        
         <!-- Call Status -->
         <div class="text-center" [class.connecting]="callStatus === 'connecting'">
           <div class="text-sm text-gray-400 mb-2">
@@ -71,18 +78,21 @@
             </span>
           </div>
           <div *ngIf="callStatus === 'connected'" class="text-lg font-semibold text-white call-duration">
-            {{ formatDuration(callDuration) }}
+            <!-- {{ formatDuration(callDuration) }} -->
           </div>
         </div>
 
         <!-- Video Container -->
-        <div *ngIf="callData?.type === 'video'" class="relative video-container">
+        <div  class="relative video-container"
+          [class.hidden]="callData?.type !== 'video'"
+        >
           <!-- Remote Video (Main) -->
           <video #remoteVideo 
                  class="w-full h-64 bg-gray-800 rounded-lg object-cover"
                  autoplay 
                  playsinline
-                 muted>
+                 muted
+          >
           </video>
           
           <!-- Local Video (Picture-in-Picture) -->
@@ -90,7 +100,8 @@
                  class="absolute bottom-4 right-4 w-24 h-24 bg-gray-700 rounded-lg object-cover border-2 border-white local-video"
                  autoplay 
                  playsinline
-                 muted>
+                 muted
+          >
           </video>
         </div>
 
