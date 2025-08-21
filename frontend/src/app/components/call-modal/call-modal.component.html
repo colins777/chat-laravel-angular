@@ -1,5 +1,7 @@
-<div *ngIf="isVisibleCallModal"
+<!-- <div *ngIf="isVisibleCallModal" -->
+<div 
      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+     [class.hidden]="!isVisibleCallModal"
      (click)="onEndCall()">
   
   <!-- Call Modal -->
@@ -64,6 +66,7 @@
                   class="bg-red-500 hover:bg-red-600 text-white p-4 rounded-full transition-colors">
             ❌
           </button>
+
         </div>
       </div>
 
@@ -120,6 +123,15 @@
             📞
           </button>
         </div>
+
+
+        <!-- camera off/on button -->
+        <button   (click)="videoStopped ? getUserMedia() : onStopVideo()"
+            class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full transition-colors w-[55px] h-[55px] flex items-center justify-center"
+            [class.hidden]="callData?.type === 'audio'"
+            >
+            <mat-icon>camera_enhance</mat-icon>
+        </button>
       </div>
 
       <!-- Call Failed/Ended -->

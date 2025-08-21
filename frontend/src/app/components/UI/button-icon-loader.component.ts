@@ -24,7 +24,6 @@ import { Component, Input } from '@angular/core';
       display: flex;
       align-items: center;
       justify-content: center;
-      width: auto;
     }
     .loader {
       border: 2px solid #f3f3f3;

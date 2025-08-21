@@ -1,16 +1,22 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CallData } from '../../interfaces/CallData';
 import { EchoService } from '../../services/echo.service';
-import { HttpClient } from '@angular/common/http';
 import { CallService } from '../../services/call.service';
 import { Conversation } from '../../interfaces/Conversation';
+import { ButtonIconLoaderComponent } from '../UI/button-icon-loader.component';
 
 @Component({
   selector: 'app-call-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    MatIconModule,
+    CommonModule, 
+    FormsModule,
+    ButtonIconLoaderComponent
+  ],
   templateUrl: './call-modal.component.html',
   styleUrls: ['./call-modal.component.css']
 })
@@ -37,11 +43,17 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
   callDuration = 0;
   durationInterval: any;
 
-  currentCall: CallData | null = null;
-  incomingCall: CallData | null = null;
-  isIncomingCall: boolean = false;
   callData: CallData | null = null;
 
+  isIncomingCall: boolean = false;
+  callType: 'audio' | 'video' = 'audio';
+
+  isLoadingAnswer: boolean = false;
+  isLoadingDecline: boolean = false;
+
+  localVideoElement!: ElementRef<HTMLVideoElement>;
+  remoteVideoElement!: ElementRef<HTMLVideoElement>;
+  videoStopped: boolean = false;
 
   // WebRTC properties
   private peerConnection: RTCPeerConnection | null = null;
@@ -57,33 +69,26 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
     ]
   };
 
-    constructor(
-        private echo: EchoService,
-        private http: HttpClient,
-        private callService: CallService
-      ) {
-        console.log('CallModalComponent initialized');
-      }
+  constructor(
+      private echo: EchoService,
+      private callService: CallService
+    ) {}
 
   ngOnInit() {
-    console.log('CallModalComponent initialized:', this.callData);
+    console.log('localVideo El:', this.localVideo);
   }
 
   ngAfterViewInit() {
-    if (this.callData && !this.isIncomingCall) {
-      this.setupVideoElements();
-    }
+    this.localVideoElement = this.localVideo
+      this.remoteVideoElement = this.remoteVideo;
+
+    console.log('localVideo El:', this.localVideo);
   }
 
-  ngOnDestroy() {
-    this.cleanupCall();
-    if (this.durationInterval) {
-      clearInterval(this.durationInterval);
-    }
-  }
+  ngOnDestroy() {}
 
   // Listen to call events
-   listenToCallEvents(conversations: Conversation[]): void {
+  listenToCallEvents(conversations: Conversation[]): void {
     const echo = this.echo.getInstance();
     // Listen for call events on existing message channels
     conversations.forEach((conversation) => {
@@ -91,69 +96,79 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
       const sortedIds = [this.currentUser.id, otherUserId].sort().join('-');
       const channelName = `message.user.${sortedIds}`;
 
-      console.log('Listening to call events channels...', channelName);
-
       echo.private(channelName)
         .listen('CallInitiated', (data: any) => {
 
-          console.log('Incoming call:', data);
+          console.log('WS Incoming call:', data);
 
-          this.incomingCall = data;
+          this.callData = data;
           this.isIncomingCall = true;
           this.isVisibleCallModal = true;
         })
         .listen('CallAnswered', (data: any) => {
 
-          console.log('Call answered:', data);
+          console.log('WS Call answered:', data);
 
-          this.currentCall = data;
           this.isIncomingCall = false;
-          this.isVisibleCallModal = true;
+          this.handleWebRTCSignal(data);
         })
         .listen('CallEnded', (data: any) => {
 
-          console.log('Call ended:', data);
+          console.log('WS Call ended:', data);
 
           this.handleCallEnded(data);
         })
         .listen('WebRTCSignal', (data: any) => {
-          console.log('WebRTC signal received:', data);
+
+          console.log('WS WebRTC signal received:', data);
+
           this.handleWebRTCSignal(data);
         });
     });
   }
 
   // Handle WebRTC signals
-  handleWebRTCSignal(signal: any) {
-    console.log('Handling WebRTC signal:', signal);
+handleWebRTCSignal(signal: any) {
+  console.log('Handling WebRTC signal:', signal);
+  
+  // if (!this.peerConnection) {
+  //   console.error('No peer connection available');
+  //   return;
+  // }
+
+  switch (signal.type) {
+    case 'offer':
+      this.handleIncomingOffer(signal.offer);
+      break;
+    case 'answer':
+      this.handleIncomingAnswer(signal.answer);
+      break;
+    case 'ice-candidate':
+      this.handleIncomingICECandidate(signal.candidate);
+      break;
+  }
+}
+
+private async handleIncomingOffer(offer: RTCSessionDescriptionInit) {
+  try {
+    await this.peerConnection!.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await this.peerConnection!.createAnswer();
+    await this.peerConnection!.setLocalDescription(answer);
     
-    if (signal.type === 'offer' && this.peerConnection) {
-      // Handle incoming offer when answering a call
-      this.handleIncomingOffer(signal);
-    } else if (signal.type === 'answer' && this.peerConnection) {
-      // Handle incoming answer when initiating a call
-      this.handleIncomingAnswer(signal);
-    } else if (signal.type === 'ice-candidate' && this.peerConnection) {
-      // Handle incoming ICE candidate
-      this.handleIncomingICECandidate(signal);
-    }
+    // Send answer back
+    this.sendSignalToServer({
+      type: 'answer',
+      answer: answer,
+      call_session_id: this.callData?.call_session_id,
+      to_user_id: this.getOtherUserId()
+    });
+  } catch (error) {
+    console.error('Failed to handle incoming offer:', error);
+    this.callStatus = 'failed';
   }
+}
 
-  private async handleIncomingOffer(offer: any) {
-    try {
-      await this.peerConnection!.setRemoteDescription(new RTCSessionDescription(offer));
-      const answer = await this.peerConnection!.createAnswer();
-      await this.peerConnection!.setLocalDescription(answer);
-      
-      // Send answer back to the caller
-      this.sendSignal('answer', answer);
-    } catch (error) {
-      console.error('Failed to handle incoming offer:', error);
-      this.callStatus = 'failed';
-    }
-  }
-
-  private async handleIncomingAnswer(answer: any) {
+  private async handleIncomingAnswer(answer: RTCSessionDescriptionInit) {
     try {
       await this.peerConnection!.setRemoteDescription(new RTCSessionDescription(answer));
     } catch (error) {
@@ -162,7 +177,7 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  private async handleIncomingICECandidate(candidate: any) {
+  private async handleIncomingICECandidate(candidate: RTCIceCandidateInit) {
     try {
       await this.peerConnection!.addIceCandidate(new RTCIceCandidate(candidate));
     } catch (error) {
@@ -172,8 +187,6 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // Handle call ended
   handleCallEnded(call: CallData | null) {
-    this.currentCall = null;
-    this.incomingCall = null;
     this.isIncomingCall = false;
     this.isVisibleCallModal = false;
     this.callService.clearCalls();
@@ -181,66 +194,165 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isCalling.emit(false);
   }
 
-  // Call control methods
-  initiateCall(type: 'audio' | 'video') {
-
-    console.log('type:', type);
-
+  async initiateCall(type: 'audio' | 'video') {
     if (!this.selectedConversation) return;
 
-   this.isCalling.emit(true)
+    this.isCalling.emit(true);
+    this.callType = type;
 
-    this.callService.initiateCall(this.selectedConversation.id, type).subscribe({
+    //TODO need to ask user to turn on camera/microphone in case when it is not enabled
+    // First get user media/camera/microphone access and setup peer connection
+    await this.getUserMedia()
+      .then(() => {
+        
+        this.setupPeerConnection()
+          .then(() => {
+            // Create call via your service
+            this.callService.initiateCall(this.selectedConversation!.id, type).subscribe({
+                next: async (response) => {
+
+                console.log('Call initiated:', response);
+
+                this.callData = response.call;
+                this.isIncomingCall = false;
+                this.isVisibleCallModal = true;
+
+                // Create and send offer
+                await this.createAndSendOffer();
+                
+                this.isCalling.emit(false);
+            },
+            error: (error) => {
+              this.isCalling.emit(false);
+              console.error('Failed to initiate call:', error);
+            }
+          });
+      }) 
+    })
+    .catch((error) => {
+      console.error('Failed to get user media:', error);
+      this.isCalling.emit(false);
+    });
+  }
+
+  private async createAndSendOffer() {
+    try {
+      const offer = await this.peerConnection!.createOffer();
+      await this.peerConnection!.setLocalDescription(offer);
+      
+      this.sendSignalToServer({
+        type: 'offer',
+        offer: offer,
+        call_session_id: this.callData?.call_session_id,
+        to_user_id: this.getOtherUserId()
+      });
+    } catch (error) {
+      console.error('Failed to create offer:', error);
+    }
+  }
+
+  private sendSignalToServer(data: any) {
+    this.callService.sendSignal({
+      call_session_id: data.call_session_id,
+      to_user_id: data.to_user_id,
+      signal_type: data.type,
+      signal_data: data.type === 'ice-candidate' ? data.candidate : 
+                  data.type === 'offer' ? data.offer : data.answer
+    }).subscribe({
       next: (response) => {
-        console.log('Call initiated:', response);
-        this.currentCall = response.call;
-
-        this.callData = response.call;
-
-        this.isIncomingCall = false;
-        this.isVisibleCallModal = true;
-        this.isCalling.emit(false)
+        console.log('Signal sent successfully:', response);
       },
       error: (error) => {
-         this.isCalling.emit(false)
-        console.error('Failed to initiate call:', error);
-  
+        console.error('Failed to send signal:', error);
       }
     });
+  }
+
+  private getOtherUserId(): number {
+    if (!this.callData) return 0;
+    
+    const call = this.callData;
+
+    return call.caller.id === this.currentUser.id ? call.receiver.id : call.caller.id;
+  }
+
+  onAnswerCall() {
+    if (this.callData) {
+      this.setupAnswerCall();
+      this.answerCall(this.callData.id);
+    } else {
+      this.onEndCall();
+    }
   }
 
   answerCall(callId: number) {
+
+    this.isLoadingAnswer = true;
+
     this.callService.answerCall(callId).subscribe({
       next: (response) => {
         console.log('Call answered:', response);
-        this.currentCall = response.call;
-        this.incomingCall = null;
+        this.callData = response.call;
         this.isIncomingCall = false;
-        this.isVisibleCallModal = true;
-        
-        // Emit that we're no longer in calling state
         this.isCalling.emit(false);
+        console .log('Sending signal for answered call:', this.callData)
+
+        if (!this.callData) {
+          console.error('Call data is null after answering');
+          this.isLoadingAnswer = false;
+
+          return;
+        }
+        this.callService.sendSignal({
+          call_session_id: this.callData.call_session_id,
+          to_user_id: this.callData?.receiver.id,
+          signal_type: 'answer',
+          signal_data: this.callData
+        }).subscribe({
+        next: (signalResponse) => {
+          this.isLoadingAnswer = false;
+          console.log('Signal sent successfully:', signalResponse);
+        },
+        error: (signalError) => {
+          this.isLoadingAnswer = false
+          console.error('Failed to send signal:', signalError);
+        }
+        });
       },
       error: (error) => {
         console.error('Failed to answer call:', error);
-        // Emit that we're no longer in calling state on error
+        this.isLoadingAnswer = false
         this.isCalling.emit(false);
       }
     });
   }
 
-  declineCall(callId: number) {
-    this.callService.declineCall(callId).subscribe({
-      next: (response) => {
-        console.log('Call declined:', response);
-        this.handleCallEnded(response.call);
-      },
-      error: (error) => {
-        console.error('Failed to decline call:', error);
-        // Even on error, we should clean up the call state
-        this.handleCallEnded(null);
-      }
-    });
+  private async setupAnswerCall() {
+    try {
+      await this.getUserMedia();
+      this.setupPeerConnection();
+
+      //this.startCallTimer();
+
+      this.callStatus = 'connecting';
+      this.isCalling.emit(false);
+    } catch (error) {
+      console.error('Failed to setup answer call:', error);
+      this.callStatus = 'failed';
+      
+      this.isCalling.emit(false);
+    }
+  }
+
+  onEndCall() {
+    if (this.callData) {
+      this.endCall(this.callData.id);
+    }
+
+    this.isCalling.emit(false);
+    this.isVisibleCallModal = false;
+    this.isIncomingCall = false;
+    this.closeModal.emit();
   }
 
   endCall(callId: number) {
@@ -248,32 +360,14 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
       next: (response) => {
         console.log('Call ended:', response);
         this.handleCallEnded(response.call);
+
+        this.cleanupCall()
       },
       error: (error) => {
         console.error('Failed to end call:', error);
-        // Even on error, we should clean up the call state
         this.handleCallEnded(null);
       }
     });
-  }
-
-  onEndCall() {
-    if (this.callData) {
-      this.endCall(this.callData.id);
-    } else if (this.incomingCall) {
-      // If no callData but we have an incoming call, decline it
-      this.declineCall(this.incomingCall.id);
-    }
-
-    // Emit that we're no longer in calling state
-    this.isCalling.emit(false);
-
-    this.isVisibleCallModal = false;
-    this.currentCall = null;
-    this.incomingCall = null;
-    this.isIncomingCall = false;
-
-    this.closeModal.emit();
   }
 
   // Dragging functionality
@@ -303,124 +397,175 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
       console.log('Calling:', this.isCalling);
   }
 
-  // Call control methods
-  onAnswerCall() {
-    if (this.incomingCall) {
-      console.log('Answering call data:', this.incomingCall);
-      
-      this.callData = this.incomingCall;
-      
-      // Answer the call via the service
-      this.answerCall(this.incomingCall.id);
-      
-      // Set up the call as an answerer (not initiator)
-      this.setupAnswerCall();
-    }
-  }
-
   onDeclineCall() {
-    if (this.incomingCall) {
-      console.log('Declining call with ID:', this.incomingCall.id);
-      // Call the declineCall method directly
-      this.declineCall(this.incomingCall.id);
-      
-      // Emit that we're no longer in calling state
+      console.log('Declining call with ID:', this.callData!.id);
+      this.declineCall(this.callData!.id);
       this.isCalling.emit(false);
-      
       this.closeModal.emit();
-    }
-  }
-  // WebRTC methods
-  private async setupAnswerCall() {
-    try {
-      await this.getUserMedia();
-      this.setupPeerConnection();
-      // For answerer, we don't create an offer, we wait for the offer from the caller
-      this.startCallTimer();
-      this.callStatus = 'connecting';
-      this.isCalling.emit(false);
-    } catch (error) {
-      console.error('Failed to setup answer call:', error);
-      this.callStatus = 'failed';
-      
-      this.isCalling.emit(false);
-    }
   }
 
-  private async getUserMedia() {
+  declineCall(callId: number) {
+    this.callService.declineCall(callId).subscribe({
+      next: (response) => {
+        console.log('Call declined:', response);
+        this.handleCallEnded(response.call);
+      },
+      error: (error) => {
+        console.error('Failed to decline call:', error);
+        // Even on error, we should clean up the call state
+        this.handleCallEnded(null);
+      }
+    });
+  }
+
+//media
+  async getUserMedia(): Promise<void> {
+    try {
+
+    console.log('this.callData', this.callData);
+
     const constraints = {
-      audio: true,
-      video: this.callData?.type === 'video'
+        audio: true,
+       // video: this.callData?.type === 'video' ? {
+      //  video: {
+      //     width: { min: 640, ideal: 1200, max: 1200 },
+      //     height: { min: 480, ideal: 1200, max: 720 },
+      //  }
+      video: { width: 640, height: 480 },
+      
     };
 
-    this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
-    
-    if (this.localVideo?.nativeElement) {
-      this.localVideo.nativeElement.srcObject = this.localStream;
+
+    await navigator.mediaDevices.getUserMedia(constraints)
+      .then((stream) => {
+        this.localStream = stream;
+        console.log('Local stream obtained:', stream);
+        this.startLocalVideo();
+    })
+    } catch (error) {
+      console.error('Failed to get user media:', error);
+      throw error;  
     }
   }
 
-  private setupPeerConnection() {
-    this.peerConnection = new RTCPeerConnection(this.rtcConfiguration);
+  startLocalVideo() {
+    this.localStream?.getVideoTracks().forEach(track => {
+      track.enabled = true;
+    });
 
-    // Add local stream tracks
+    const videoElement = this.localVideoElement.nativeElement;
+    videoElement.srcObject = this.localStream;
+     // Set video properties
+    videoElement.autoplay = true;
+    videoElement.playsInline = true;
+    videoElement.muted = false;
+  
+
+
+    // Check video status after a delay
+    setTimeout(() => {
+      console.log('Delayed video check:');
+      this.verifyVideoElement(this.localVideoElement.nativeElement);
+      videoElement.play().catch((error) => {
+        console.error('Error playing local video:', error);
+      });
+
+      this.videoStopped = false;
+
+      // If still not loaded, try to force load
+      if (videoElement.readyState === 0) {
+        console.log('Forcing video load...');
+        videoElement.load();
+        
+        // Check again after forcing load
+        setTimeout(() => {
+          this.verifyVideoElement(this.localVideoElement.nativeElement);
+        }, 1000);
+      }
+    }, 500);
+  }
+
+
+  onStopVideo() {
+    this.stopLocalVideo();
+    this.videoStopped = true;
+
+    console.log('Local video stopped');
+    // this.callService.sendSignal({
+    //   call_session_id: this.callData?.call_session_id,
+    //   to_user_id: this.getOtherUserId(),
+    //   signal_type: 'stop-video',
+    //   signal_data: null
+    // }).subscribe({
+    //   next: (response) => {
+    //     console.log('Video stopped signal sent:', response);
+    //   },
+    //   error: (error) => {
+    //     console.error('Failed to send stop video signal:', error);
+    //   }
+    // });
+  }
+
+  stopLocalVideo() {
+    this.localStream?.getVideoTracks().forEach(track => {
+      track.stop();
+    });
+
+    this.localVideo.nativeElement.srcObject = null;
+
+    console.log('Stopping local video Local stream...', this.localStream);
+    this.verifyVideoElement(this.localVideoElement.nativeElement);
+  }
+
+private verifyVideoElement(videoElement: HTMLVideoElement): void {
+  console.log('- srcObject:', videoElement.srcObject);
+  console.log('- videoWidth:', videoElement.videoWidth);
+  console.log('- videoHeight:', videoElement.videoHeight);
+  console.log('- readyState:', videoElement.readyState);
+  console.log('- paused:', videoElement.paused);
+  console.log('- muted:', videoElement.muted);
+  
+  // Check if srcObject has video tracks
+  if (videoElement.srcObject && videoElement.srcObject instanceof MediaStream) {
+    const stream = videoElement.srcObject as MediaStream;
+    console.log(`-stream active:`, stream.active);
+    console.log(`-stream video tracks:`, stream.getVideoTracks().length);
+  }
+}
+
+private async setupPeerConnection() {
+  this.peerConnection = new RTCPeerConnection(this.rtcConfiguration);
+
+    // Add local stream tracks to peer connection
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => {
         this.peerConnection?.addTrack(track, this.localStream!);
       });
     }
 
-    // Handle incoming tracks
+    // Handle incoming remote tracks
     this.peerConnection.ontrack = (event) => {
+      console.log('Received remote stream:', event.streams[0]);
+
       this.remoteStream = event.streams[0];
+      
+      // Set remote video element
       if (this.remoteVideo?.nativeElement) {
         this.remoteVideo.nativeElement.srcObject = this.remoteStream;
       }
     };
 
-    // Handle ICE candidates
-    this.peerConnection.onicecandidate = (event) => {
-      if (event.candidate) {
-        // Send ICE candidate to the other peer via signaling server
-        this.sendSignal('ice-candidate', event.candidate);
-      }
-    };
-
-    // Handle connection state changes
+  // Handle connection state changes
     this.peerConnection.onconnectionstatechange = () => {
+      console.log('Connection state:', this.peerConnection?.connectionState);
       if (this.peerConnection?.connectionState === 'connected') {
         this.callStatus = 'connected';
-        // Emit that we're no longer in calling state when connected
         this.isCalling.emit(false);
       } else if (this.peerConnection?.connectionState === 'failed') {
         this.callStatus = 'failed';
-        // Emit that we're no longer in calling state when failed
         this.isCalling.emit(false);
       }
     };
-  }
-
-  private sendSignal(type: string, data: any) {
-    // This will be implemented to send signals via your WebSocket service
-    console.log('Sending signal:', type, data);
-  }
-
-  private setupVideoElements() {
-    if (this.localVideo?.nativeElement && this.localStream) {
-      this.localVideo.nativeElement.srcObject = this.localStream;
-    }
-    
-    // Also set up remote video if we have it
-    if (this.remoteVideo?.nativeElement && this.remoteStream) {
-      this.remoteVideo.nativeElement.srcObject = this.remoteStream;
-    }
-  }
-
-  private startCallTimer() {
-    this.durationInterval = setInterval(() => {
-      this.callDuration++;
-    }, 1000);
-    this.isCalling.emit(false);
   }
 
   private cleanupCall() {
@@ -437,13 +582,18 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.durationInterval) {
       clearInterval(this.durationInterval);
     }
-  }
+}
 
-  // Format call duration
-  formatDuration(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }
+  // private startCallTimer() {
+  //   this.durationInterval = setInterval(() => {
+  //     this.callDuration++;
+  //   }, 1000);
+  //   this.isCalling.emit(false);
+  // }
 
+  // formatDuration(seconds: number): string {
+  //   const mins = Math.floor(seconds / 60);
+  //   const secs = seconds % 60;
+  //   return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  // }
 }
