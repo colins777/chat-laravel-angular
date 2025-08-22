@@ -94,7 +94,6 @@
                  class="w-full h-64 bg-gray-800 rounded-lg object-cover"
                  autoplay 
                  playsinline
-                 muted
           >
           </video>
           
@@ -106,6 +105,7 @@
                  muted
           >
           </video>
+
         </div>
 
         <!-- Audio Only Indicator -->
@@ -124,15 +124,24 @@
           </button>
         </div>
 
+        <div class="flex justify-center space-x-4 pt-4 call-controls">
+            <!-- camera off/on button -->
+            <button   (click)="videoStopped ? getUserMedia() : onStopVideo()"
+                class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full w-[55px] h-[55px] flex items-center justify-center"
+                [class.hidden]="callData?.type === 'audio'"
+                >
+                <mat-icon>camera_enhance</mat-icon>
+            </button>
 
-        <!-- camera off/on button -->
-        <button   (click)="videoStopped ? getUserMedia() : onStopVideo()"
-            class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full transition-colors w-[55px] h-[55px] flex items-center justify-center"
-            [class.hidden]="callData?.type === 'audio'"
-            >
-            <mat-icon>camera_enhance</mat-icon>
-        </button>
-      </div>
+            <button   (click)="onMicrophoneToggle()"
+                class="bg-green-500 hover:bg-green-600 text-white p-4 rounded-full transition-colors w-[55px] h-[55px] flex items-center justify-center"
+                
+                >
+                <mat-icon>{{microphoneOn ? 'mic' : 'mic_off'}}</mat-icon>
+            </button>
+          </div>
+        </div>
+
 
       <!-- Call Failed/Ended -->
       <div *ngIf="callStatus === 'failed' || callStatus === 'ended'" class="text-center py-4">
@@ -145,5 +154,7 @@
         </button>
       </div>
     </div>
+
+    
   </div>
 </div>

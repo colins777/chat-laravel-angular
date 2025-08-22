@@ -1,4 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ElementRef, ViewChild, AfterViewInit, input } from '@angular/core';
+import { MatDialogModule} from '@angular/material/dialog';
+import { CdkDrag } from '@angular/cdk/drag-drop';
 import { MatIconModule } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -8,6 +10,7 @@ import { CallService } from '../../services/call.service';
 import { Conversation } from '../../interfaces/Conversation';
 import { ButtonIconLoaderComponent } from '../UI/button-icon-loader.component';
 
+
 @Component({
   selector: 'app-call-modal',
   standalone: true,
@@ -15,6 +18,8 @@ import { ButtonIconLoaderComponent } from '../UI/button-icon-loader.component';
     MatIconModule,
     CommonModule, 
     FormsModule,
+    MatDialogModule,
+    CdkDrag,
     ButtonIconLoaderComponent
   ],
   templateUrl: './call-modal.component.html',
@@ -54,6 +59,7 @@ export class CallModalComponent implements OnInit, OnDestroy, AfterViewInit {
   localVideoElement!: ElementRef<HTMLVideoElement>;
   remoteVideoElement!: ElementRef<HTMLVideoElement>;
   videoStopped: boolean = false;
+  microphoneOn: boolean = true;
 
   // WebRTC properties
   private peerConnection: RTCPeerConnection | null = null;
@@ -189,9 +195,10 @@ private async handleIncomingOffer(offer: RTCSessionDescriptionInit) {
   handleCallEnded(call: CallData | null) {
     this.isIncomingCall = false;
     this.isVisibleCallModal = false;
-    this.callService.clearCalls();
-    
+    this.cleanupCall();
     this.isCalling.emit(false);
+
+    this.callService.clearCalls();
   }
 
   async initiateCall(type: 'audio' | 'video') {
@@ -199,6 +206,9 @@ private async handleIncomingOffer(offer: RTCSessionDescriptionInit) {
 
     this.isCalling.emit(true);
     this.callType = type;
+
+
+    console.log('Initiating call type:', type);  
 
     //TODO need to ask user to turn on camera/microphone in case when it is not enabled
     // First get user media/camera/microphone access and setup peer connection
@@ -230,8 +240,9 @@ private async handleIncomingOffer(offer: RTCSessionDescriptionInit) {
       }) 
     })
     .catch((error) => {
-      console.error('Failed to get user media:', error);
       this.isCalling.emit(false);
+      console.error('Failed to get user media:', error);
+      
     });
   }
 
@@ -421,27 +432,16 @@ private async handleIncomingOffer(offer: RTCSessionDescriptionInit) {
 //media
   async getUserMedia(): Promise<void> {
     try {
-
-    console.log('this.callData', this.callData);
-
-    const constraints = {
+      const constraints = {
         audio: true,
-       // video: this.callData?.type === 'video' ? {
-      //  video: {
-      //     width: { min: 640, ideal: 1200, max: 1200 },
-      //     height: { min: 480, ideal: 1200, max: 720 },
-      //  }
-      video: { width: 640, height: 480 },
-      
-    };
+        video: this.callType === 'video' ? { width: 640, height: 480 } : false,
+      };
 
-
-    await navigator.mediaDevices.getUserMedia(constraints)
-      .then((stream) => {
-        this.localStream = stream;
-        console.log('Local stream obtained:', stream);
-        this.startLocalVideo();
-    })
+      await navigator.mediaDevices.getUserMedia(constraints)
+        .then((stream) => {
+          this.localStream = stream;
+          this.startLocalVideo();
+      })
     } catch (error) {
       console.error('Failed to get user media:', error);
       throw error;  
@@ -449,24 +449,32 @@ private async handleIncomingOffer(offer: RTCSessionDescriptionInit) {
   }
 
   startLocalVideo() {
-    this.localStream?.getVideoTracks().forEach(track => {
-      track.enabled = true;
+
+    this.localStream?.getAudioTracks().forEach(track => {
+      track.enabled = true; // Ensure audio is enabled
+      console.log('audio track enabled:', track);
+     // track.muted = false; // Unmute audio
     });
+
+    if (this.callType === 'video') {
+      this.localStream?.getVideoTracks().forEach((track) => {
+        console.log('video track enabled:', track);
+        track.enabled = true;
+      });
+    }
 
     const videoElement = this.localVideoElement.nativeElement;
     videoElement.srcObject = this.localStream;
-     // Set video properties
     videoElement.autoplay = true;
     videoElement.playsInline = true;
+    //for audio unmuted
     videoElement.muted = false;
-  
-
 
     // Check video status after a delay
     setTimeout(() => {
       console.log('Delayed video check:');
       this.verifyVideoElement(this.localVideoElement.nativeElement);
-      videoElement.play().catch((error) => {
+        videoElement.play().catch((error) => {
         console.error('Error playing local video:', error);
       });
 
@@ -524,6 +532,9 @@ private verifyVideoElement(videoElement: HTMLVideoElement): void {
   console.log('- readyState:', videoElement.readyState);
   console.log('- paused:', videoElement.paused);
   console.log('- muted:', videoElement.muted);
+  console.log('- autoplay:', videoElement.autoplay);  
+  console.log('- videoTracks:', videoElement.srcObject ? (videoElement.srcObject as MediaStream).getVideoTracks().length : 0);
+  console.log('- audioTracks:', videoElement.srcObject ? (videoElement.srcObject as MediaStream).getAudioTracks().length : 0);
   
   // Check if srcObject has video tracks
   if (videoElement.srcObject && videoElement.srcObject instanceof MediaStream) {
@@ -568,9 +579,11 @@ private async setupPeerConnection() {
     };
   }
 
+  //end call
   private cleanupCall() {
     if (this.localStream) {
       this.localStream.getTracks().forEach(track => track.stop());
+      this.localVideo.nativeElement.srcObject = null;
       this.localStream = null;
     }
 
@@ -582,7 +595,22 @@ private async setupPeerConnection() {
     if (this.durationInterval) {
       clearInterval(this.durationInterval);
     }
-}
+  }
+
+  onMicrophoneToggle() {
+    if (this.localStream) {
+      this.microphoneOn = !this.microphoneOn;
+      this.localStream.getAudioTracks().forEach(track => {
+      track.enabled = this.microphoneOn;
+        
+      this.verifyVideoElement(this.localVideoElement.nativeElement);
+
+      });
+      console.log('Microphone on:', this.microphoneOn);
+    } else {
+      console.warn('Local stream is not available to toggle microphone');
+    }
+  } 
 
   // private startCallTimer() {
   //   this.durationInterval = setInterval(() => {
