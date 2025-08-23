@@ -1,0 +1,21 @@
+.dialogs-header {
+    @media screen and (max-width: var(--screen-mobile-max)) {
+        
+    }
+}
+
+.conversations-sidebar {
+    @media screen and (max-width: 540px) {
+        width: 80%;
+        position: absolute;
+        top: 0;
+        left: -100%;
+    }
+    &.active {
+        left: 0;
+        z-index: 10;
+        background-color: #121212;
+        height: 100%;
+        transition: left 0.3s ease-in-out;
+    }
+}

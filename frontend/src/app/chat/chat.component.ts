@@ -21,34 +21,38 @@ import { MessageAttachmentHelperService } from '../services/message-attachment-h
 import { DotsMenuComponent } from '../components/UI/dots-menu/dots-menu.component';
 import { CallModalComponent } from '../components/call-modal/call-modal.component';
 import  { ButtonIconLoaderComponent } from '../components/UI/button-icon-loader.component';
+import { GlobalClickService } from '../services/global-click.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-chat',
   standalone: true,
   imports: [
-    CommonModule,        
+    CommonModule,
     MatSidenavModule,
     MatToolbarModule,
     MatListModule,
     MatIconModule,
     MatButtonModule,
-    FormsModule, 
+    FormsModule,
     RouterModule,
     MessageFormComponent,
     LeftSidebarComponent,
     LoaderWrapperComponent,
     DotsMenuComponent,
     CallModalComponent,
-    ButtonIconLoaderComponent
+    ButtonIconLoaderComponent,
   ],
   templateUrl: './chat.component.html',
-  styleUrls: ['./chat.component.css']
+  styleUrls: ['./chat.component.css'],
 })
-
 export class ChatComponent implements OnInit, OnDestroy {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
   @ViewChild(CallModalComponent) callModal!: CallModalComponent;
-  
+  @ViewChild('sidebar') sidebarElement!: ElementRef;
+
+  private clickSubscription!: Subscription;
+
   errMessage!: string | null;
   user!: any | null;
 
@@ -82,19 +86,20 @@ export class ChatComponent implements OnInit, OnDestroy {
   isDeletingMessage: boolean = false;
 
   // Call-related properties
-   isVisibleCallModal = false;
-   isCalling = false;
+  isVisibleCallModal = false;
+  isCalling = false;
 
   constructor(
-      private svc: HttpTokenService,
-      private router: Router,
-      private echo: EchoService,
-      public messageAttachmentHelper: MessageAttachmentHelperService,
-    ) {}
+    private svc: HttpTokenService,
+    private router: Router,
+    private echo: EchoService,
+    public messageAttachmentHelper: MessageAttachmentHelperService,
+    private globalClickService: GlobalClickService,
+  ) {}
 
   //addEcho service for listening to events
   listenToEchoEvents(): void {
-   // if (!this.user) return;
+    // if (!this.user) return;
     const echo = this.echo.getInstance();
 
     this.conversations.forEach((conversation, i) => {
@@ -102,123 +107,139 @@ export class ChatComponent implements OnInit, OnDestroy {
       const sortedIds = [this.user.id, otherUserId].sort().join('-');
       const channelName = `message.user.${sortedIds}`;
 
-      echo.private(channelName)
-        .listen('SocketMessage', (data: any) => {
-          const newMessage: Message = data.message;
+      echo.private(channelName).listen('SocketMessage', (data: any) => {
+        const newMessage: Message = data.message;
 
-          // Show new message in tje messages list if it belongs to the current selected conversation
-          if (this.selectedConversation && this.selectedConversation.id === newMessage.sender_id && !newMessage.deleted) {
-           // if (!newMessage.deleted) {
+        // Show new message in tje messages list if it belongs to the current selected conversation
+        if (
+          this.selectedConversation &&
+          this.selectedConversation.id === newMessage.sender_id &&
+          !newMessage.deleted
+        ) {
+          // if (!newMessage.deleted) {
 
-              console.log('newMessage:', newMessage);
-              console.log('messages:', this.messages);
+          console.log('newMessage:', newMessage);
+          console.log('messages:', this.messages);
 
-              this.messages.push(newMessage);
-              this.groupedMessages = this.groupMessagesByDate(this.messages);
-            
-              this.scrollToBottom();
-              this.shouldScrollToBottom = false;
+          this.messages.push(newMessage);
+          this.groupedMessages = this.groupMessagesByDate(this.messages);
 
-          } 
+          this.scrollToBottom();
+          this.shouldScrollToBottom = false;
+        }
 
-          if (newMessage.deleted) {
-              //this.updateConversationsWithLastMessage(newMessage);
-                console.log('Message deleted:', newMessage);
+        if (newMessage.deleted) {
+          //this.updateConversationsWithLastMessage(newMessage);
+          console.log('Message deleted:', newMessage);
 
-              this.messages = this.messages.filter(message => message.id !== newMessage.id);
-              this.groupedMessages = this.groupMessagesByDate(this.messages);
-          } else {
-            // Update conversation with new message
-           this.updateConversationsWithLastMessage(newMessage);
-          }
-
-          
-        });
+          this.messages = this.messages.filter(
+            (message) => message.id !== newMessage.id
+          );
+          this.groupedMessages = this.groupMessagesByDate(this.messages);
+        } else {
+          // Update conversation with new message
+          this.updateConversationsWithLastMessage(newMessage);
+        }
+      });
     });
 
     // Listen for call events
     //this.listenToCallEvents();
 
-    console.log('listen!')
+    console.log('listen!');
 
-    echo.join('online')
+    echo
+      .join('online')
       .here((usersOnline: User[]) => {
-        console.log('WS online', usersOnline)
+        console.log('WS online', usersOnline);
 
         this.onlineUsers = usersOnline;
 
         this.conversations.forEach((conversation) => {
           if (usersOnline.length > 0) {
-          usersOnline.map((user) => {
-            if (conversation.id === user.id && this.user.id !== conversation.id) {
-              conversation.online = true;
-            }
-          })
-        }});
-        console.log('conversation here', this.conversations)
-      })
-      .joining((usersOnline:any) => {
-          console.log('WS joining', usersOnline)
-          
-          this.conversations.forEach((conversation) => {
-            const users = Array.isArray(usersOnline) ? usersOnline : [usersOnline];
-            users.map((user: any) => {
-              if (conversation.id === user.id && this.user.id !== conversation.id) {
+            usersOnline.map((user) => {
+              if (
+                conversation.id === user.id &&
+                this.user.id !== conversation.id
+              ) {
                 conversation.online = true;
               }
             });
+          }
         });
+        console.log('conversation here', this.conversations);
       })
-      .leaving((usersOnline:any) => {
-          console.log('WS leaving', usersOnline)
+      .joining((usersOnline: any) => {
+        console.log('WS joining', usersOnline);
 
-          this.conversations.forEach((conversation) => {
-            const users = Array.isArray(usersOnline) ? usersOnline : [usersOnline];
-            users.map((user: any) => {
-              if (conversation.id === user.id && this.user.id !== conversation.id) {
-                conversation.online = false;
-              }
-            });
+        this.conversations.forEach((conversation) => {
+          const users = Array.isArray(usersOnline)
+            ? usersOnline
+            : [usersOnline];
+          users.map((user: any) => {
+            if (
+              conversation.id === user.id &&
+              this.user.id !== conversation.id
+            ) {
+              conversation.online = true;
+            }
+          });
         });
-          console.log('conversations leaving', this.conversations)
       })
-      .error((e:any) => {
-        console.warn('WS error', e)
+      .leaving((usersOnline: any) => {
+        console.log('WS leaving', usersOnline);
+
+        this.conversations.forEach((conversation) => {
+          const users = Array.isArray(usersOnline)
+            ? usersOnline
+            : [usersOnline];
+          users.map((user: any) => {
+            if (
+              conversation.id === user.id &&
+              this.user.id !== conversation.id
+            ) {
+              conversation.online = false;
+            }
+          });
+        });
+        console.log('conversations leaving', this.conversations);
+      })
+      .error((e: any) => {
+        console.warn('WS error', e);
       });
   }
   ngOnInit(): void {
-    this.svc.getUser()
-      .subscribe({
-        next: (response: any) => {
-          this.user = response;
-          this.loadConversations();
-        },
-        error: (error: { error: { message: string } }) => {
-          this.errMessage = error.error.message || 'An error occurred';
-          console.error('Error fetching user:', error);
-          this.router.navigate(['/chat']);
-        }
-      });
+    this.svc.getUser().subscribe({
+      next: (response: any) => {
+        this.user = response;
+        this.loadConversations();
+      },
+      error: (error: { error: { message: string } }) => {
+        this.errMessage = error.error.message || 'An error occurred';
+        console.error('Error fetching user:', error);
+        this.router.navigate(['/chat']);
+      },
+    });
   }
 
   ngOnDestroy(): void {
     //  this.echo.disconnect();
-      const echo = this.echo.getInstance();
-      console.log('ngOnDestroy', echo)
-      echo.disconnect();
+    const echo = this.echo.getInstance();
+    console.log('ngOnDestroy', echo);
+    echo.disconnect();
 
-      console.log('ngOnDestroy', echo)
+    console.log('ngOnDestroy', echo);
   }
 
   scrollToBottom(): void {
     try {
       const element = this.messagesContainer.nativeElement;
 
-      console.log('scrollToBottom height', element.scrollHeight)
+      console.log('scrollToBottom height', element.scrollHeight);
 
       element.scrollTo({
         top: element.scrollHeight,
-        behavior: 'smooth'
+        behavior: 'smooth',
       });
     } catch (err) {
       console.error('Error scrolling to bottom:', err);
@@ -241,10 +262,9 @@ export class ChatComponent implements OnInit, OnDestroy {
     return groups;
   }
   loadConversations(): void {
-  this.loadingConversations = true;
+    this.loadingConversations = true;
 
-  this.svc.getConversations()
-    .subscribe({
+    this.svc.getConversations().subscribe({
       next: (response: any) => {
         this.conversations = response.data || response;
         this.localConversations = response.data || response;
@@ -253,13 +273,13 @@ export class ChatComponent implements OnInit, OnDestroy {
         this.listenToEchoEvents();
         this.callModal.listenToCallEvents(this.conversations);
 
-        console.log('loadConversations', this.conversations)
+        console.log('loadConversations', this.conversations);
       },
       error: (error: any) => {
         this.errMessage = 'Failed to load conversations';
         this.loadingConversations = false;
         console.error('Error fetching conversations:', error);
-      }
+      },
     });
   }
 
@@ -267,10 +287,10 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.messages = [];
     this.currentPage = 1;
     this.receiverId = conversation.id;
-    this.selectedConversation =  conversation;
+    this.selectedConversation = conversation;
     console.log('selectedConversation', this.selectedConversation);
-    this.loadMessagesByUser(this.receiverId, this.currentPage)
-    
+    this.loadMessagesByUser(this.receiverId, this.currentPage);
+
     //this.scrollToBottom();
     this.shouldScrollToBottom = true;
 
@@ -282,40 +302,39 @@ export class ChatComponent implements OnInit, OnDestroy {
     }
   }
 
-loadMessagesByUser(userId: number, page: number = 1): void {
+  loadMessagesByUser(userId: number, page: number = 1): void {
+    this.loading = true;
+    this.svc.getMessagesByUser(userId, page).subscribe({
+      next: (response) => {
+        if (page === 1) {
+          this.messages = response.data.reverse();
+          this.showMessages = true;
+        } else {
+          this.messages = [...response.data.reverse(), ...this.messages];
+          this.showMessages = true;
+        }
 
-  this.loading = true;
-  this.svc.getMessagesByUser(userId, page).subscribe({
-    next: (response) => {
-      if (page === 1) {
-        this.messages = response.data.reverse();
-        this.showMessages = true;
-      } else {
-        this.messages = [...response.data.reverse(), ...this.messages];
-        this.showMessages = true;
-      }
-  
-      this.currentPage = response.meta.current_page[0];
-      this.groupedMessages = this.groupMessagesByDate(this.messages);
-      this.hasMoreMessages = !!response.meta.next_page_url;
-      this.loading = false;
+        this.currentPage = response.meta.current_page[0];
+        this.groupedMessages = this.groupMessagesByDate(this.messages);
+        this.hasMoreMessages = !!response.meta.next_page_url;
+        this.loading = false;
 
-      //scroll to bottom
-      console.log('shouldScrollToBottom', this.shouldScrollToBottom)
-      if (this.shouldScrollToBottom) {
+        //scroll to bottom
+        console.log('shouldScrollToBottom', this.shouldScrollToBottom);
+        if (this.shouldScrollToBottom) {
           this.scrollToBottom();
           this.shouldScrollToBottom = false;
-      }
+        }
 
-      console.log('response messages:', response)
-      console.log('loadMessages:', this.messages)
-    },
-    error: (error: any) => {
-      console.warn('error', error.message)
-      this.loading = false;
-    }
-  });
-}
+        console.log('response messages:', response);
+        console.log('loadMessages:', this.messages);
+      },
+      error: (error: any) => {
+        console.warn('error', error.message);
+        this.loading = false;
+      },
+    });
+  }
 
   onScroll(event: any): void {
     const scrollTop = event.target.scrollTop;
@@ -331,14 +350,15 @@ loadMessagesByUser(userId: number, page: number = 1): void {
     }
 
     const searchTerm = term.toLowerCase().trim();
-    this.conversations = this.localConversations.filter(conversation =>
-      conversation.name &&
-      conversation.name.toLowerCase().includes(searchTerm)
+    this.conversations = this.localConversations.filter(
+      (conversation) =>
+        conversation.name &&
+        conversation.name.toLowerCase().includes(searchTerm)
     );
   }
 
   updateConversationsWithLastMessage(message: Message): void {
-   this.conversations.forEach((conversation) => {
+    this.conversations.forEach((conversation) => {
       if (conversation.id === message.sender_id) {
         conversation.last_message = message.message;
         conversation.last_message_date = new Date(message.created_at);
@@ -350,15 +370,15 @@ loadMessagesByUser(userId: number, page: number = 1): void {
   markAsRead(senderId: number): void {
     this.svc.markAsRead(senderId).subscribe({
       next: (response: any) => {
-        console.log('markAsRead', response)
+        console.log('markAsRead', response);
       },
       error: (error: any) => {
         console.error('Error marking as read:', error);
-      }
+      },
     });
   }
 
-   onMenuToggled(data: {messageId: number, isOpen: boolean}): void {
+  onMenuToggled(data: { messageId: number; isOpen: boolean }): void {
     if (data.isOpen) {
       this.openMessageMenus.add(data.messageId);
     } else {
@@ -372,24 +392,25 @@ loadMessagesByUser(userId: number, page: number = 1): void {
   }
 
   //TODO fix bug with last message not being deleted
-  onDeleteMessage(messageId:  number): void {
-
+  onDeleteMessage(messageId: number): void {
     this.isDeletingMessage = true;
-   
+
     this.svc.deleteMessage(messageId).subscribe({
       next: (response: any) => {
-        console.log('deleteMessage', response)
+        console.log('deleteMessage', response);
 
-       this.messages = this.messages.filter(message => message.id !== messageId);
-       this.groupedMessages = this.groupMessagesByDate(this.messages);
-       this.openMessageMenus.delete(messageId);
+        this.messages = this.messages.filter(
+          (message) => message.id !== messageId
+        );
+        this.groupedMessages = this.groupMessagesByDate(this.messages);
+        this.openMessageMenus.delete(messageId);
 
-       this.isDeletingMessage = false;
+        this.isDeletingMessage = false;
       },
       error: (error: any) => {
         console.error('Error marking as read:', error);
-      }
-    })
+      },
+    });
   }
 
   initiateCall(type: 'audio' | 'video'): void {
@@ -401,8 +422,37 @@ loadMessagesByUser(userId: number, page: number = 1): void {
   }
 
   //emitter to parent component when call state changes
-  onIsCalling(isCalling:boolean): void { 
+  onIsCalling(isCalling: boolean): void {
     this.isCalling = isCalling;
+  }
+
+  //conversations sidebar for mobile
+  toggleSidebar(): void {
+    if (this.sidebarElement) {
+      this.sidebarElement.nativeElement.classList.toggle('active');
+
+      if (this.sidebarElement.nativeElement.classList.contains('active')) {
+          this.globalClickService.startListening();
+          this.clickSubscription = this.globalClickService.clicks$.subscribe((event: MouseEvent) => {
+            this.onDocumentClick(event);
+        });
+      } 
+    }
+  }
+
+ onDocumentClick(event: MouseEvent): void {
+    const clickedInside = this.sidebarElement.nativeElement.contains(event.target);
+    const isMenuButton = (event.target as HTMLElement).closest('.mobile-mnu');
+
+    if (!clickedInside && !isMenuButton) {
+      this.closeConversationsMenu();
+    }
+  }
+
+  closeConversationsMenu(): void {
+    this.sidebarElement.nativeElement.classList.remove('active');
+    this.clickSubscription?.unsubscribe();
+    this.globalClickService.stopListening();
   }
 
 }

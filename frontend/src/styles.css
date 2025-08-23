@@ -4,3 +4,21 @@
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 
+:root {
+  /* Mobile (handset) max-width */
+  --screen-mobile-max: 599.98px;
+
+  /* Tablet portrait range */
+  --screen-tablet-portrait-min: 600px;
+  --screen-tablet-portrait-max: 839.98px;
+
+  /* Tablet landscape range */
+  --screen-tablet-landscape-min: 840px;
+  --screen-tablet-landscape-max: 1279.98px;
+
+  /* Desktop / large screen min-width */
+  --screen-desktop-min: 1280px;
+
+  --screen-desktop-large: 1400px;
+}
+

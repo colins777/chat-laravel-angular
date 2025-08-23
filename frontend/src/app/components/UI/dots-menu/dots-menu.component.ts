@@ -40,13 +40,16 @@ export class DotsMenuComponent {
     this.allMenusClosedEmitter.emit();
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: Event): void {
-    const target = event.target as HTMLElement;
-    if (!target.closest('.additional-dots-menu') && !target.closest('.additional-dots-dropdown')) {
-      this.closeAllMessageMenus();
-    }
-  }
+  //TODO fix this using global click service
+  // onDocumentClick(event: Event): void {
+  //   const target = event.target as HTMLElement;
+
+  //   console.log('Document clicked dots menu:', target);
+
+  //   if (!target.closest('.additional-dots-menu') && !target.closest('.additional-dots-dropdown')) {
+  //     this.closeAllMessageMenus();
+  //   }
+  // }
 
   deleteMessageHandler(messageId: number): void {
     if (this.isDeletingMessage) {
