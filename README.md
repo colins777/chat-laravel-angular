@@ -94,6 +94,10 @@ The application will be available at http://localhost:4200
 ```bash
 ng cache clean
 ```
+##For testing audio/video without https in local network, run Chrome with the special flag using command line on Windows:
+```bash
+"C:\Program Files\Google\Chrome\Application\chrome.exe" --unsafely-treat-insecure-origin-as-secure="http://***.***.**:4200" --user-data-dir="C:/temp/chrome-secure-profile"
+```
 
 ##Go to login page - http://localhost:4200/login -> redirect to http://localhost:4200/chat
 
